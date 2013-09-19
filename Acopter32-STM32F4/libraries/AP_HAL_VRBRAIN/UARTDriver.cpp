@@ -63,7 +63,7 @@ void VRBRAINUARTDriver::begin(uint32_t baud) {
 	delay_us(1000);
 	*/
     }
-    else
+//    else
     {
 	const stm32_pin_info *txi = &PIN_MAP[_usart_device->tx_pin];
 	const stm32_pin_info *rxi = &PIN_MAP[_usart_device->rx_pin];

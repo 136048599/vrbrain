@@ -67,6 +67,7 @@ uint16_t usb_tx_pending(void);
 void usb_putc(uint8_t byte);
 void usb_reset_rx(void);
 void usb_reset_tx(void);
+uint8_t is_usb_var_connected();
 
 #ifdef __cplusplus
   }

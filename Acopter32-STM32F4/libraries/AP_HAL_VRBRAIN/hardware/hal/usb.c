@@ -674,6 +674,12 @@ uint8_t is_usb_connected(usb_attr_t *attr)
 }
 
 
+uint8_t is_usb_var_connected()
+{
+		return usb_connected;
+}
+
+
 /*---------------------------- usb_ioctl --------------------------------*/
 
 int usb_ioctl(int request, void *ctl)
@@ -723,10 +729,11 @@ int usb_write(uint8_t *buf, unsigned int nbytes)
 	U8 *buffer8 = (U8 *)buf;
 	int bytesput;
 	
-	if (usb_ready == 0)
-	{
-		return 0;
-	}
+	//if (usb_connected == 0)
+	//{
+	//    usb_reset_tx();
+	//    return 0;
+	//}
 		
 	sent = 0;
 

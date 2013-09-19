@@ -263,6 +263,7 @@ USB_OTG_STS USB_OTG_SelectCore(USB_OTG_CORE_HANDLE *pdev,
     pdev->cfg.phy_itface       = USB_OTG_EMBEDDED_PHY;
 #endif  
 #endif      
+
     
 #ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED    
     pdev->cfg.dma_enable       = 1;    

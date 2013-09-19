@@ -55,7 +55,7 @@ void Print::write(const char *str) {
 void Print::write(const void *buffer, uint32 size) {
     uint8 *ch = (uint8*)buffer;
     while (size--) {
-        write(*ch++);
+        	(*ch++);
     }
 }
 
