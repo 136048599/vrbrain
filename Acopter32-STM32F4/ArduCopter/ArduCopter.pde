@@ -1,6 +1,6 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduCopter V3.1.9"
+#define THISFIRMWARE "ArduCopter V3.1.10"
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1230,12 +1230,8 @@ static void one_hz_loop()
         motors.set_frame_orientation(g.frame_orientation);
     }
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_8, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
-#elif MOUNT == ENABLED
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_8, &g.rc_10, &g.rc_11);
-#endif
-
+    // update assigned functions and enable auxiliar servos
+    aux_servos_update_fn();
     enable_aux_servos();
 
 #if MOUNT == ENABLED
