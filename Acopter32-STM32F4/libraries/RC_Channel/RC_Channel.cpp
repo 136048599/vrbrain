@@ -222,9 +222,9 @@ RC_Channel::load_eeprom(void)
 void
 RC_Channel::save_eeprom(void)
 {
-    radio_min.save(true);
+    radio_min.save();
     radio_trim.save();
-    radio_max.save(true);
+    radio_max.save();
     _reverse.save();
     _dead_zone.save();
 }

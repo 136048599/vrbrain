@@ -22,7 +22,6 @@
 #define GSCALAR(v, name, def) { g.v.vtype, name, Parameters::k_param_ ## v, &g.v, {def_value : def} }
 #define GGROUP(v, name, class) { AP_PARAM_GROUP, name, Parameters::k_param_ ## v, &g.v, {group_info : class::var_info} }
 #define GOBJECT(v, name, class) { AP_PARAM_GROUP, name, Parameters::k_param_ ## v, &v, {group_info : class::var_info} }
-#define GOBJECTN(v, pname, name, class) { AP_PARAM_GROUP, name, Parameters::k_param_ ## pname, &v, {group_info : class::var_info} }
 
 const AP_Param::Info var_info[] PROGMEM = {
     // @Param: SYSID_SW_MREV
@@ -49,21 +48,12 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Advanced
     GSCALAR(sysid_my_gcs,   "SYSID_MYGCS",     255),
 
-    // @Param: SERIAL1_BAUD
+    // @Param: SERIAL3_BAUD
     // @DisplayName: Telemetry Baud Rate
-    // @Description: The baud rate used on the first telemetry port
+    // @Description: The baud rate used on the telemetry port
     // @Values: 1:1200,2:2400,4:4800,9:9600,19:19200,38:38400,57:57600,111:111100,115:115200
     // @User: Standard
-    GSCALAR(serial1_baud,   "SERIAL1_BAUD",     SERIAL1_BAUD/1000),
-
-#if MAVLINK_COMM_NUM_BUFFERS > 2
-    // @Param: SERIAL2_BAUD
-    // @DisplayName: Telemetry Baud Rate
-    // @Description: The baud rate used on the seconds telemetry port
-    // @Values: 1:1200,2:2400,4:4800,9:9600,19:19200,38:38400,57:57600,111:111100,115:115200
-    // @User: Standard
-    GSCALAR(serial2_baud,   "SERIAL2_BAUD",     SERIAL2_BAUD/1000),
-#endif
+    GSCALAR(serial3_baud,   "SERIAL3_BAUD",     SERIAL3_BAUD/1000),
 
     // @Param: TELEM_DELAY
     // @DisplayName: Telemetry startup delay
@@ -100,7 +90,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Param: SONAR_GAIN
     // @DisplayName: Sonar gain
     // @Description: Used to adjust the speed with which the target altitude is changed when objects are sensed below the copter
-    // @Range: 0.01 2.0
+    // @Range: 0.01 0.5
     // @Increment: 0.01
     // @User: Standard
     GSCALAR(sonar_gain,     "SONAR_GAIN",           SONAR_GAIN_DEFAULT),
@@ -410,7 +400,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Description: Allows enabling or disabling of pre-arming checks of receiver, accelerometer, barometer, compass and GPS
     // @Values: 0:Disabled, 1:Enabled, -3:Skip Baro, -5:Skip Compass, -9:Skip GPS, -17:Skip INS, -33:Skip Parameters, -65:Skip RC, 127:Skip Voltage
     // @User: Standard
-    GSCALAR(arming_check, "ARMING_CHECK",           ARMING_CHECK_ALL),
+    GSCALAR(arming_check_enabled, "ARMING_CHECK",   ARMING_CHECK_ALL),
 
     // @Param: ANGLE_MAX
     // @DisplayName: Angle Max
@@ -625,7 +615,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Param: RATE_RLL_D
     // @DisplayName: Roll axis rate controller D gain
     // @Description: Roll axis rate controller D gain.  Compensates for short-term change in desired roll rate vs actual roll rate
-    // @Range: 0.001 0.02
+    // @Range: 0.001 0.008
     // @Increment: 0.001
     // @User: Standard
     GGROUP(pid_rate_roll,     "RATE_RLL_", AC_PID),
@@ -655,7 +645,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Param: RATE_PIT_D
     // @DisplayName: Pitch axis rate controller D gain
     // @Description: Pitch axis rate controller D gain.  Compensates for short-term change in desired pitch rate vs actual pitch rate
-    // @Range: 0.001 0.02
+    // @Range: 0.001 0.008
     // @Increment: 0.001
     // @User: Standard
     GGROUP(pid_rate_pitch,    "RATE_PIT_", AC_PID),
@@ -677,7 +667,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Param: RATE_YAW_IMAX
     // @DisplayName: Yaw axis rate controller I gain maximum
     // @Description: Yaw axis rate controller I gain maximum.  Constrains the maximum motor output that the I gain will output
-    // @Range: 0 800
+    // @Range: 0 500
     // @Increment: 10
     // @Units: pwm
     // @User: Standard
@@ -685,7 +675,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Param: RATE_YAW_D
     // @DisplayName: Yaw axis rate controller D gain
     // @Description: Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual yaw rate
-    // @Range: 0.000 0.02
+    // @Range: 0.000 0.001
     // @Increment: 0.001
     // @User: Standard
     GGROUP(pid_rate_yaw,      "RATE_YAW_", AC_PID),
@@ -1008,17 +998,11 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Group: SR0_
     // @Path: GCS_Mavlink.pde
-    GOBJECTN(gcs[0],  gcs0,       "SR0_",     GCS_MAVLINK),
+    GOBJECT(gcs0,                   "SR0_",     GCS_MAVLINK),
 
-    // @Group: SR1_
+    // @Group: SR3_
     // @Path: GCS_Mavlink.pde
-    GOBJECTN(gcs[1],  gcs1,       "SR1_",     GCS_MAVLINK),
-
-#if MAVLINK_COMM_NUM_BUFFERS > 2
-    // @Group: SR2_
-    // @Path: GCS_Mavlink.pde
-    GOBJECTN(gcs[2],  gcs2,       "SR2_",     GCS_MAVLINK),
-#endif
+    GOBJECT(gcs3,                   "SR3_",     GCS_MAVLINK),
 
     // @Group: AHRS_
     // @Path: ../libraries/AP_AHRS/AP_AHRS.cpp
@@ -1143,15 +1127,6 @@ static void load_parameters(void)
     if (!ahrs._kp_yaw.load()) {
         ahrs._kp_yaw.set_and_save(0.1);
     }
-
-#if SECONDARY_DMP_ENABLED == ENABLED
-    if (!ahrs2._kp.load()) {
-        ahrs2._kp.set(0.1);
-    }
-    if (!ahrs2._kp_yaw.load()) {
-        ahrs2._kp_yaw.set(0.1);
-    }
-#endif
 
     // setup different Compass learn setting for ArduCopter than the default
     // but allow users to override in their config

@@ -1,6 +1,6 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduCopter V3.1.12.rc7"
+#define THISFIRMWARE "ArduCopter V3.1.13-final"
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -313,10 +313,6 @@ AP_GPS_None     g_gps_driver;
  #endif // GPS PROTOCOL
 
 static AP_AHRS_DCM ahrs(ins, g_gps);
-// ahrs2 object is the secondary ahrs to allow running DMP in parallel with DCM
-  #if SECONDARY_DMP_ENABLED == ENABLED && CONFIG_HAL_BOARD == HAL_BOARD_APM2
-static AP_AHRS_MPU6000  ahrs2(ins, g_gps);               // only works with APM2
-  #endif
 
 #elif HIL_MODE == HIL_MODE_SENSORS
 // sensor emulators
@@ -362,8 +358,8 @@ static AP_OpticalFlow optflow;
 ////////////////////////////////////////////////////////////////////////////////
 // GCS selection
 ////////////////////////////////////////////////////////////////////////////////
-static const uint8_t num_gcs = MAVLINK_COMM_NUM_BUFFERS;
-static GCS_MAVLINK gcs[MAVLINK_COMM_NUM_BUFFERS];
+static GCS_MAVLINK gcs0;
+static GCS_MAVLINK gcs3;
 
 ////////////////////////////////////////////////////////////////////////////////
 // SONAR selection
@@ -957,7 +953,7 @@ void setup() {
             &sonar_mode_filter);
 #endif
 
-
+    rssi_analog_source      = hal.analogin->channel(g.rssi_pin);
     board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
 
     init_ardupilot();
@@ -1438,6 +1434,13 @@ bool set_yaw_mode(uint8_t new_yaw_mode)
 // 100hz update rate
 void update_yaw_mode(void)
 {
+    int16_t pilot_yaw = g.rc_4.control_in;
+
+    // do not process pilot's yaw input during radio failsafe
+    if (failsafe.radio) {
+        pilot_yaw = 0;
+    }
+
     switch(yaw_mode) {
 
     case YAW_HOLD:
@@ -1446,12 +1449,12 @@ void update_yaw_mode(void)
             nav_yaw = ahrs.yaw_sensor;
         }
         // heading hold at heading held in nav_yaw but allow input from pilot
-        get_yaw_rate_stabilized_ef(g.rc_4.control_in);
+        get_yaw_rate_stabilized_ef(pilot_yaw);
         break;
 
     case YAW_ACRO:
         // pilot controlled yaw using rate controller
-        get_yaw_rate_stabilized_bf(g.rc_4.control_in);
+        get_yaw_rate_stabilized_bf(pilot_yaw);
         break;
 
     case YAW_LOOK_AT_NEXT_WP:
@@ -1466,7 +1469,7 @@ void update_yaw_mode(void)
         get_stabilize_yaw(nav_yaw);
 
         // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
+        if (pilot_yaw != 0) {
             set_yaw_mode(YAW_HOLD);
         }
         break;
@@ -1480,7 +1483,7 @@ void update_yaw_mode(void)
         get_look_at_yaw();
 
         // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
+        if (pilot_yaw != 0) {
             set_yaw_mode(YAW_HOLD);
         }
         break;
@@ -1494,7 +1497,7 @@ void update_yaw_mode(void)
         get_circle_yaw();
 
         // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
+        if (pilot_yaw != 0) {
             set_yaw_mode(YAW_HOLD);
         }
         break;
@@ -1510,7 +1513,7 @@ void update_yaw_mode(void)
         get_stabilize_yaw(nav_yaw);
 
         // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
+        if (pilot_yaw != 0) {
             set_yaw_mode(YAW_HOLD);
         }
         break;
@@ -1532,7 +1535,7 @@ void update_yaw_mode(void)
             nav_yaw = ahrs.yaw_sensor;
         }
 		// Commanded Yaw to automatically look ahead.
-        get_look_ahead_yaw(g.rc_4.control_in);
+        get_look_ahead_yaw(pilot_yaw);
         break;
 
     case YAW_DRIFT:
@@ -1554,7 +1557,7 @@ void update_yaw_mode(void)
         get_stabilize_yaw(nav_yaw);
 
         // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
+        if (pilot_yaw != 0) {
             set_yaw_mode(YAW_HOLD);
         }
 
@@ -2088,10 +2091,6 @@ static void read_AHRS(void)
 
     ahrs.update();
     omega = ins.get_gyro();
-
-#if SECONDARY_DMP_ENABLED == ENABLED
-    ahrs2.update();
-#endif
 }
 
 static void update_trig(void){

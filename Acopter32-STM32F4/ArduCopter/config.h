@@ -305,7 +305,7 @@
 #endif
 
 #ifndef SONAR_GAIN_DEFAULT
- # define SONAR_GAIN_DEFAULT 2.0            // gain for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
+ # define SONAR_GAIN_DEFAULT 0.8            // gain for controlling how quickly sonar range adjusts target altitude (lower means slower reaction)
 #endif
 
 #ifndef THR_SURFACE_TRACKING_VELZ_MAX
@@ -360,11 +360,8 @@
 #ifndef SERIAL0_BAUD
  # define SERIAL0_BAUD                   115200
 #endif
-#ifndef SERIAL1_BAUD
- # define SERIAL1_BAUD                    57600
-#endif
-#ifndef SERIAL2_BAUD
- # define SERIAL2_BAUD                    57600
+#ifndef SERIAL3_BAUD
+ # define SERIAL3_BAUD                    57600
 #endif
 
 
@@ -426,6 +423,17 @@
 #else // PX4, SITL
  #ifndef COMPASS_MAGFIELD_EXPECTED
   #define COMPASS_MAGFIELD_EXPECTED      530        // pre arm will fail if mag field > 874 or < 185
+ #endif
+#endif
+
+// max compass offset length (i.e. sqrt(offs_x^2+offs_y^2+offs_Z^2))
+#ifndef CONFIG_ARCH_BOARD_PX4FMU_V1
+ #ifndef COMPASS_OFFSETS_MAX
+  # define COMPASS_OFFSETS_MAX          600         // PX4 onboard compass has high offsets
+ #endif
+#else   // APM1, APM2, SITL, FLYMAPLE, etc
+ #ifndef COMPASS_OFFSETS_MAX
+  # define COMPASS_OFFSETS_MAX          500
  #endif
 #endif
 
