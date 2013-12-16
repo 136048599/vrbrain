@@ -185,7 +185,7 @@ AP_Compass_HMC5843_EXT::init()
     float gain_multiple = 1.0;
 
     hal.scheduler->delay(10);
-hal.console->println("Compass init" );
+
     _i2c_sem = hal.i2c2->get_semaphore();
     if (!_i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
         hal.scheduler->panic(PSTR("Failed to get HMC5843 semaphore"));
@@ -202,14 +202,14 @@ hal.console->println("Compass init" );
     if ( _base_config == (SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation)) {
         // a 5883L supports the sample averaging config
         product_id = AP_COMPASS_TYPE_HMC5883L;
-        hal.console->println("Compass TYPE: HMC5883L" );
+        hal.console->println("Compass TYPE: HMC5883L EXT" );
         calibration_gain = 0x60;
         expected_x = 766;
         expected_yz  = 713;
         gain_multiple = 660.0 / 1090;  // adjustment for runtime vs calibration gain
     } else if (_base_config == (NormalOperation | DataOutputRate_75HZ<<2)) {
         product_id = AP_COMPASS_TYPE_HMC5843;
-        hal.console->println("Compass TYPE: HMC5843" );
+        hal.console->println("Compass TYPE: HMC5843 EXT" );
     } else {
         // not behaving like either supported compass type
         _i2c_sem->give();
@@ -338,11 +338,12 @@ bool AP_Compass_HMC5843_EXT::read()
 
     // apply default board orientation for this compass type. This is
     // a noop on most boards
-    rot_mag.rotate(MAG_BOARD_ORIENTATION);
+    //rot_mag.rotate(MAG_BOARD_ORIENTATION);
 
     // add user selectable orientation
     rot_mag.rotate((enum Rotation)_orientation.get());
 
+    _external = 1;
     if (!_external) {
         // and add in AHRS_ORIENTATION setting if not an external compass
         rot_mag.rotate(_board_orientation);
