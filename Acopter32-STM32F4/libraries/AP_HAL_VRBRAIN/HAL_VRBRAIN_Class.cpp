@@ -77,7 +77,7 @@ static uint8_t detect_compass(void){
 	hal.console->printf_P(PSTR("Internal Compass found!"));
 	return 0;
     }
-
+    return 0;
 }
 void HAL_VRBRAIN::init(int argc,char* const argv[]) const
 {
