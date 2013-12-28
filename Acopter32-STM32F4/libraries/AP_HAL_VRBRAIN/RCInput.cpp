@@ -3,6 +3,9 @@
 #include "RCInput.h"
 #include <pwm_in.h>
 
+//#include <AP_Param.h>
+//#include <AP_Common.h>
+//#include "Parameters.h"
 
 // Constructors ////////////////////////////////////////////////////////////////
 using namespace AP_HAL;
@@ -124,74 +127,30 @@ void VRBRAINRCInput::InitDefaultPPM(char board)
 	}
     }
 
-
 VRBRAINRCInput::VRBRAINRCInput()
     {
     }
 
-void VRBRAINRCInput::init(void* machtnichts)
+void VRBRAINRCInput::init(void* machtnichts, uint8_t mode)
     {
+    _iboard = 11;
 
-    /*initial check for pin2-pin3 bridge. If detected switch to PPMSUM  */
-    //default to standard PPM
-    _iboard = 2;
-
-    uint8_t channel3_status = 0;
-    uint8_t pin2, pin3;
-    //input pin 2
-    pin2 = 80;
-    //input pin 3
-    pin3 = 86;
-
-    //set pin2 as output and pin 3 as input
-    hal.gpio->pinMode(pin2, OUTPUT);
-    hal.gpio->pinMode(pin3, INPUT);
-
-    //default pin3 to 0
-    hal.gpio->write(pin3, 0);
-    hal.scheduler->delay(1);
-
-    //write 1 to pin 2 and read pin3
-    hal.gpio->write(pin2, 1);
-    hal.scheduler->delay(1);
-    //if pin3 is 1 increment counter
-    if (hal.gpio->read(pin3) == 1)
-	channel3_status++;
-
-    //write 0 to pin 2 and read pin3
-    hal.gpio->write(pin2, 0);
-    hal.scheduler->delay(1);
-    //if pin3 is 0 increment counter
-    if (hal.gpio->read(pin3) == 0)
-	channel3_status++;
-
-    //write 1 to pin 2 and read pin3
-    hal.gpio->write(pin2, 1);
-    hal.scheduler->delay(1);
-    //if pin3 is 1 increment counter
-    if (hal.gpio->read(pin3) == 1)
-	channel3_status++;
-
-    //if counter is 3 then we are in PPMSUM
-    if (channel3_status == 3)
-	_iboard = 11;
-
-    if (_iboard < 10) //PWM
+    if (mode == 0) // PPM Standart
 	{
+	_iboard = 2;
 	for (byte channel = 0; channel < 8; channel++)
 	    pinData[channel].edge = FALLING_EDGE;
 	// Init Radio In
 	//hal.console->println("Init Default PPM");
 	pwmInit(false);
 	}
-    else //PPMSUM
+    else // PPMSUM
 	{
 	// Init Radio In
 	//hal.console->println("Init Default PPMSUM");
 	attachPWMCaptureCallback(rxIntPPMSUM);
 	pwmInit(true);
 	}
-
     clear_overrides();
     }
 
@@ -201,7 +160,6 @@ uint8_t VRBRAINRCInput::valid_channels()
 	return 1;
     else
 	return _valid_channels;
-
     }
 
 uint16_t VRBRAINRCInput::read(uint8_t ch)

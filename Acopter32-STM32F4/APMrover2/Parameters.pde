@@ -427,6 +427,12 @@ const AP_Param::Info var_info[] PROGMEM = {
 	GSCALAR(command_total,          "CMD_TOTAL",        0),
 	GSCALAR(command_index,          "CMD_INDEX",        0),
 
+    // @Param: RC_IN_PPM_PPMSUM
+    // @DisplayName: Radio Input Mode PPM or PPMSUM
+    // @Description:
+    // @User: Advanced
+    // @Values: 0:PPM,1:PPMSUM
+        GSCALAR(rc_ppm_ppmsum_mode, "RC_IN_PPM_PPMSUM",     0),
     // @Param: WP_RADIUS
     // @DisplayName: Waypoint radius
     // @Description: The distance in meters from a waypoint when we consider the waypoint has been reached. This determines when the rover will turn along the next waypoint path.

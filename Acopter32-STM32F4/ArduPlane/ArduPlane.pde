@@ -760,7 +760,7 @@ void setup() {
     AP_Notify::flags.pre_arm_check = true;
     AP_Notify::flags.failsafe_battery = false;
 
-    notify.init();
+    notify.init(true);
 
     battery.init();
 

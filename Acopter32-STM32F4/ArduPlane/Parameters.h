@@ -211,6 +211,8 @@ public:
         k_param_kff_throttle_to_pitch,
         k_param_scaling_speed,
 
+        k_param_rc_ppm_ppmsum_mode, // RC_INPUT Mode 0-PPM, 1-PPMSUM
+
         //
         // 210: flight modes
         //
@@ -283,6 +285,9 @@ public:
 
     // speed used for speed scaling
     AP_Float scaling_speed;
+
+    // RC_INPUT Mode 0-PPM, 1-PPMSUM
+    AP_Int8         rc_ppm_ppmsum_mode;
 
     // navigation controller type. See AP_Navigation::ControllerType
     AP_Int8  nav_controller;

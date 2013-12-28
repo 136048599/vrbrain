@@ -192,6 +192,11 @@ static void init_ardupilot()
 	mavlink_system.compid = 1;	//MAV_COMP_ID_IMU;   // We do not check for comp id
 	mavlink_system.type = MAV_TYPE_GROUND_ROVER;
 
+    if(g.rc_ppm_ppmsum_mode == 0)
+	hal.rcin->init(NULL, 0); // PPM Standart
+    else
+	hal.rcin->init(NULL, 1); // PPMSUM
+
     rc_override_active = hal.rcin->set_overrides(rc_override, 8);
 
 	init_rc_in();		// sets up rc channels from radio

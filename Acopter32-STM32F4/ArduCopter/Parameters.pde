@@ -349,6 +349,14 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Advanced
     GSCALAR(simple_modes, "SIMPLE",                 0),
 
+    // @Param: RC_IN_PPM_PPMSUM
+    // @DisplayName: Radio Input Mode PPM or PPMSUM
+    // @Description:  
+    // @User: Advanced
+    // @Values: 0:PPM,1:PPMSUM
+    GSCALAR(rc_ppm_ppmsum_mode, "RC_IN_PPM_PPMSUM",          0),
+    
+    
     // @Param: LOG_BITMASK
     // @DisplayName: Log bitmask
     // @Description: 2 byte bitmap of log types to enable

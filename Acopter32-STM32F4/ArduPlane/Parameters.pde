@@ -649,6 +649,13 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Advanced
     GSCALAR(scaling_speed,        "SCALING_SPEED",    SCALING_SPEED),
 
+    // @Param: RC_IN_PPM_PPMSUM
+    // @DisplayName: Radio Input Mode PPM or PPMSUM
+    // @Description:
+    // @User: Advanced
+    // @Values: 0:PPM,1:PPMSUM
+    GSCALAR(rc_ppm_ppmsum_mode, "RC_IN_PPM_PPMSUM",          0),
+
     // @Param: MIN_GNDSPD_CM
     // @DisplayName: Minimum ground speed
     // @Description: Minimum ground speed in cm/s when under airspeed control

@@ -44,13 +44,13 @@ HAL_VRBRAIN::HAL_VRBRAIN() :
       &uartADriver,
       &uartBDriver,
       &uartCDriver,
-	  NULL,
+      NULL,
       &i2cDriver,
       &i2c2Driver,
       &spiDeviceManager,
       &analogIn,
       &storageDriver,
-      &uartCDriver,
+      &uartADriver,
       &gpioDriver,
       &rcinDriver,
       &rcoutDriver,
@@ -78,7 +78,7 @@ void HAL_VRBRAIN::init(int argc,char* const argv[]) const
   spi->init(NULL);
   analogin->init(NULL);
   storage->init(NULL);
-  rcin->init(NULL);
+//  rcin->init(NULL);
   rcout->init((void *)&_is_ppmsum);
 
 }

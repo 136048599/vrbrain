@@ -231,6 +231,7 @@ public:
         k_param_flight_mode6,
         k_param_simple_modes,
 
+        k_param_rc_ppm_ppmsum_mode, // RC_INPUT Mode 0-PPM, 1-PPMSUM
         //
         // 210: Waypoint data
         //
@@ -344,6 +345,8 @@ public:
     AP_Int8         flight_mode6;
     AP_Int8         simple_modes;
 
+    // RC_INPUT Mode 0-PPM, 1-PPMSUM
+    AP_Int8         rc_ppm_ppmsum_mode;
     // Misc
     //
     AP_Int16        log_bitmask;
