@@ -174,10 +174,12 @@ static void init_ardupilot()
     }
 #endif
 
+#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     if(g.rc_ppm_ppmsum_mode == 0)
 	hal.rcin->init(NULL, 0); // PPM Standart
     else
 	hal.rcin->init(NULL, 1); // PPMSUM
+#endif
 
     init_rc_in();               // sets up rc channels from radio
     init_rc_out();              // sets up motors and output to escs

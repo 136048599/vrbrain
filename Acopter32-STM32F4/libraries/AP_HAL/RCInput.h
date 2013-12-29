@@ -15,8 +15,11 @@ public:
      * known to the programmer. (Its too difficult to describe this dependency
      * in the C++ type system.)
      */
+#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     virtual void init(void* implspecific, uint8_t mode) = 0;
-
+#else
+    virtual void init(void* implspecific) = 0;
+#endif
     /**
      * Return the number of currently valid channels.
      * Typically 0 (no valid radio channels) or 8 (implementation-defined)
