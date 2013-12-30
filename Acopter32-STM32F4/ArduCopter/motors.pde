@@ -322,7 +322,7 @@ static void pre_arm_checks(bool display_failure)
             return;
         }
     }
-
+#if CONFIG_HAL_BOARD != HAL_BOARD_VRBRAIN
 #ifndef CONFIG_ARCH_BOARD_PX4FMU_V1
     // check board voltage
     if ((g.arming_check_enabled == ARMING_CHECK_ALL) || (g.arming_check_enabled & ARMING_CHECK_VOLTAGE)) {
@@ -333,6 +333,7 @@ static void pre_arm_checks(bool display_failure)
             return;
         }
     }
+#endif
 #endif
 
     // check various parameter values
