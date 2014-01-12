@@ -1,6 +1,6 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduCopter V3.2-dev"
+#define THISFIRMWARE "ArduCopter V3.2-02"
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -131,6 +131,9 @@
 #include <AP_BattMonitor.h>     // Battery monitor library
 #if SPRAYER == ENABLED
 #include <AC_Sprayer.h>         // crop sprayer library
+#endif
+#if EPM_ENABLED == ENABLED
+#include <AP_EPM.h>				// EPM cargo gripper stuff
 #endif
 
 // AP_HAL to Arduino compatibility layer
@@ -275,14 +278,16 @@ static AP_Baro_MS5611 barometer(&AP_Baro_MS5611::i2c);
    #endif
   #endif
 
- #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
+ #ifdef COMPASS_EXT
+  static AP_Compass_HMC5843_EXT compass;
+ #else
+  static AP_Compass_HMC5843 compass;
+ #endif
+#elif CONFIG_HAL_BOARD == HAL_BOARD_PX4
 static AP_Compass_PX4 compass;
  #else
-  #ifdef COMPASS_EXT
-static AP_Compass_HMC5843_EXT compass;
-  #else
 static AP_Compass_HMC5843 compass;
-  #endif
  #endif
  #endif
 
@@ -313,10 +318,6 @@ AP_GPS_None     g_gps_driver;
  #endif // GPS PROTOCOL
 
 static AP_AHRS_DCM ahrs(ins, g_gps);
-// ahrs2 object is the secondary ahrs to allow running DMP in parallel with DCM
-  #if SECONDARY_DMP_ENABLED == ENABLED && CONFIG_HAL_BOARD == HAL_BOARD_APM2
-static AP_AHRS_MPU6000  ahrs2(ins, g_gps);               // only works with APM2
-  #endif
 
 #elif HIL_MODE == HIL_MODE_SENSORS
 // sensor emulators
@@ -846,6 +847,13 @@ static AC_Sprayer sprayer(&inertial_nav);
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
+// EPM Cargo Griper
+////////////////////////////////////////////////////////////////////////////////
+#if EPM_ENABLED == ENABLED
+static AP_EPM epm;
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 // function definitions to keep compiler from complaining about undeclared functions
 ////////////////////////////////////////////////////////////////////////////////
 void get_throttle_althold(int32_t target_alt, int16_t min_climb_rate, int16_t max_climb_rate);
@@ -887,9 +895,6 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { gcs_send_heartbeat,  100,     150 },
     { gcs_send_deferred,     2,     720 },
     { gcs_data_stream_send,  2,     950 },
-#if COPTER_LEDS == ENABLED
-    { update_copter_leds,   10,      55 },
-#endif
     { update_mount,          2,     450 },
     { ten_hz_logging_loop,  10,     300 },
     { fifty_hz_logging_loop, 2,     220 },
@@ -913,37 +918,12 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
 };
 
 
-void setup() {
-    // this needs to be the first call, as it fills memory with
-    // sentinel values
-    memcheck_init();
+void setup() 
+{
     cliSerial = hal.console;
 
     // Load the default values of variables listed in var_info[]s
     AP_Param::setup_sketch_defaults();
-
-    // initialise notify system
-    notify.init(true);
-
-    // initialise battery monitor
-    battery.init();
-
-#if CONFIG_SONAR == ENABLED
- #if CONFIG_SONAR_SOURCE == SONAR_SOURCE_ADC
-    sonar_analog_source = new AP_ADC_AnalogSource(
-            &adc, CONFIG_SONAR_SOURCE_ADC_CHANNEL, 0.25);
- #elif CONFIG_SONAR_SOURCE == SONAR_SOURCE_ANALOG_PIN
-    sonar_analog_source = hal.analogin->channel(
-            CONFIG_SONAR_SOURCE_ANALOG_PIN);
- #else
-  #warning "Invalid CONFIG_SONAR_SOURCE"
- #endif
-    sonar = new AP_RangeFinder_MaxsonarXL(sonar_analog_source,
-            &sonar_mode_filter);
-#endif
-
-
-    board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
 
     init_ardupilot();
 
@@ -1022,6 +1002,7 @@ void loop()
 // Main loop - 100hz
 static void fast_loop()
 {
+
     // IMU DCM Algorithm
     // --------------------
     read_AHRS();
@@ -1174,9 +1155,8 @@ static void fifty_hz_logging_loop()
         Log_Write_Attitude();
     }
 
-    if (g.log_bitmask & MASK_LOG_IMU && motors.armed()) {
+    if (g.log_bitmask & MASK_LOG_IMU && motors.armed())
         DataFlash.Log_Write_IMU(ins);
-    }
 #endif
 }
 
@@ -1608,15 +1588,9 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
         case ROLL_PITCH_AUTO:
         case ROLL_PITCH_STABLE_OF:
         case ROLL_PITCH_DRIFT:
+        case ROLL_PITCH_LOITER:
         case ROLL_PITCH_SPORT:
             roll_pitch_initialised = true;
-            break;
-
-        case ROLL_PITCH_LOITER:
-            // require gps lock
-            if( ap.home_is_set ) {
-                roll_pitch_initialised = true;
-            }
             break;
 
 #if AUTOTUNE == ENABLED
@@ -2079,10 +2053,6 @@ static void read_AHRS(void)
 
     ahrs.update();
     omega = ins.get_gyro();
-
-#if SECONDARY_DMP_ENABLED == ENABLED
-    ahrs2.update();
-#endif
 }
 
 static void update_trig(void){

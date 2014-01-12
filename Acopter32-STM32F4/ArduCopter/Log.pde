@@ -353,13 +353,14 @@ struct PACKED log_Compass {
 // Write a Compass packet
 static void Log_Write_Compass()
 {
-    Vector3f mag_offsets = compass.get_offsets();
-    Vector3f mag_motor_offsets = compass.get_motor_offsets();
+    const Vector3f &mag_offsets = compass.get_offsets(0);
+    const Vector3f &mag_motor_offsets = compass.get_motor_offsets(0);
+    const Vector3f &mag = compass.get_field(0);
     struct log_Compass pkt = {
         LOG_PACKET_HEADER_INIT(LOG_COMPASS_MSG),
-        mag_x           : compass.mag_x,
-        mag_y           : compass.mag_y,
-        mag_z           : compass.mag_z,
+        mag_x           : (int16_t)mag.x,
+        mag_y           : (int16_t)mag.y,
+        mag_z           : (int16_t)mag.z,
         offset_x        : (int16_t)mag_offsets.x,
         offset_y        : (int16_t)mag_offsets.y,
         offset_z        : (int16_t)mag_offsets.z,
@@ -368,6 +369,26 @@ static void Log_Write_Compass()
         motor_offset_z  : (int16_t)mag_motor_offsets.z
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
+#if COMPASS_MAX_INSTANCES > 1
+    if (compass.get_count() > 1) {
+        const Vector3f &mag2_offsets = compass.get_offsets(1);
+        const Vector3f &mag2_motor_offsets = compass.get_motor_offsets(1);
+        const Vector3f &mag2 = compass.get_field(1);
+        struct log_Compass pkt2 = {
+            LOG_PACKET_HEADER_INIT(LOG_COMPASS2_MSG),
+            mag_x           : (int16_t)mag2.x,
+            mag_y           : (int16_t)mag2.y,
+            mag_z           : (int16_t)mag2.z,
+            offset_x        : (int16_t)mag2_offsets.x,
+            offset_y        : (int16_t)mag2_offsets.y,
+            offset_z        : (int16_t)mag2_offsets.z,
+            motor_offset_x  : (int16_t)mag2_motor_offsets.x,
+            motor_offset_y  : (int16_t)mag2_motor_offsets.y,
+            motor_offset_z  : (int16_t)mag2_motor_offsets.z
+        };
+        DataFlash.WriteBlock(&pkt2, sizeof(pkt2));
+    }
+#endif
 }
 
 struct PACKED log_Performance {
@@ -537,30 +558,6 @@ static void Log_Write_Event(uint8_t id)
     }
 }
 
-
-#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-struct PACKED log_Data_Int8t {
-    LOG_PACKET_HEADER;
-    uint8_t id;
-    int8_t data_value;
-};
-
-
-// Write an int8_t data packet
-static void Log_Write_Data(uint8_t id, int8_t value)
-{
-    if (g.log_bitmask != 0) {
-        struct log_Data_Int8t pkt = {
-            LOG_PACKET_HEADER_INIT(LOG_DATA_INT8_MSG),
-            id          : id,
-            data_value  : value
-        };
-        DataFlash.WriteBlock(&pkt, sizeof(pkt));
-    }
-}
-#endif
-
-
 struct PACKED log_Data_Int16t {
     LOG_PACKET_HEADER;
     uint8_t id;
@@ -683,34 +680,6 @@ static void Log_Write_PID(uint8_t pid_id, int32_t error, int32_t p, int32_t i, i
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
-
-struct PACKED log_DMP {
-    LOG_PACKET_HEADER;
-    int16_t  dcm_roll;
-    int16_t  dmp_roll;
-    int16_t  dcm_pitch;
-    int16_t  dmp_pitch;
-    uint16_t dcm_yaw;
-    uint16_t dmp_yaw;
-};
-
-#if SECONDARY_DMP_ENABLED == ENABLED
-// Write a DMP attitude packet
-void Log_Write_DMP()
-{
-    struct log_DMP pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_DMP_MSG),
-        dcm_roll    : (int16_t)ahrs.roll_sensor,
-        dmp_roll    : (int16_t)ahrs2.roll_sensor,
-        dcm_pitch   : (int16_t)ahrs.pitch_sensor,
-        dmp_pitch   : (int16_t)ahrs2.pitch_sensor,
-        dcm_yaw     : (uint16_t)ahrs.yaw_sensor,
-        dmp_yaw     : (uint16_t)ahrs2.yaw_sensor
-    };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}
-#endif
-
 struct PACKED log_Camera {
     LOG_PACKET_HEADER;
     uint32_t gps_time;
@@ -777,6 +746,8 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "CTUN", "hcefchhhh",   "ThrIn,SonAlt,BarAlt,WPAlt,DesSonAlt,AngBst,CRate,ThrOut,DCRate" },
     { LOG_COMPASS_MSG, sizeof(log_Compass),             
       "MAG", "hhhhhhhhh",    "MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" },
+    { LOG_COMPASS2_MSG, sizeof(log_Compass),             
+      "MAG2", "hhhhhhhhh",    "MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" },
     { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 
       "PM",  "BBHHIhBHB",    "RenCnt,RenBlw,NLon,NLoop,MaxT,PMT,I2CErr,INSErr,INAVErr" },
     { LOG_CMD_MSG, sizeof(log_Cmd),                 
@@ -791,10 +762,6 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "STRT", "",            "" },
     { LOG_EVENT_MSG, sizeof(log_Event),         
       "EV",   "B",           "Id" },
-#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-    { LOG_DATA_INT8_MSG, sizeof(log_Data_Int8t),         
-      "D8",   "Bh",         "Id,Value" },
-#endif
     { LOG_DATA_INT16_MSG, sizeof(log_Data_Int16t),         
       "D16",   "Bh",         "Id,Value" },
     { LOG_DATA_UINT16_MSG, sizeof(log_Data_UInt16t),         
@@ -807,8 +774,6 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "DFLT",  "Bf",         "Id,Value" },
     { LOG_PID_MSG, sizeof(log_PID),         
       "PID",   "Biiiiif",    "Id,Error,P,I,D,Out,Gain" },
-    { LOG_DMP_MSG, sizeof(log_DMP),         
-      "DMP",   "ccccCC",     "DCMRoll,DMPRoll,DCMPtch,DMPPtch,DCMYaw,DMPYaw" },
     { LOG_CAMERA_MSG, sizeof(log_Camera),                 
       "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
@@ -824,13 +789,11 @@ static void Log_Read(uint16_t log_num, uint16_t start_page, uint16_t end_page)
 
     cliSerial->printf_P(PSTR("\n" FIRMWARE_STRING
                              "\nFree RAM: %u\n"),
-                        (unsigned) memcheck_available_memory());
+                        (unsigned) hal.util->available_memory());
 
     cliSerial->println_P(PSTR(HAL_BOARD_NAME));
 
 	DataFlash.LogReadProcess(log_num, start_page, end_page, 
-                             sizeof(log_structure)/sizeof(log_structure[0]),
-                             log_structure, 
                              print_flight_mode,
                              cliSerial);
 }
@@ -840,7 +803,7 @@ static void start_logging()
 {
     if (g.log_bitmask != 0 && !ap.logging_started) {
         ap.logging_started = true;
-        DataFlash.StartNewLog(sizeof(log_structure)/sizeof(log_structure[0]), log_structure);
+        DataFlash.StartNewLog();
         DataFlash.Log_Write_Message_P(PSTR(FIRMWARE_STRING));
 
         // write system identifier as well if available
@@ -859,8 +822,8 @@ static void start_logging()
 static void Log_Write_Startup() {}
 static void Log_Write_Cmd(uint8_t num, const struct Location *wp) {}
 static void Log_Write_Mode(uint8_t mode) {}
-void Log_Write_IMU() {}
-void Log_Write_GPS() {}
+static void Log_Write_IMU() {}
+static void Log_Write_GPS() {}
 #if AUTOTUNE == ENABLED
 static void Log_Write_AutoTune(uint8_t axis, uint8_t tune_step, float rate_min, float rate_max, float new_gain_rp, float new_gain_rd, float new_gain_sp) {}
 static void Log_Write_AutoTuneDetails(int16_t angle_cd, float rate_cds) {}
@@ -869,9 +832,6 @@ static void Log_Write_Current() {}
 static void Log_Write_Compass() {}
 static void Log_Write_Attitude() {}
 static void Log_Write_INAV() {}
-#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-static void Log_Write_Data(uint8_t id, int8_t value){}
-#endif
 static void Log_Write_Data(uint8_t id, int16_t value){}
 static void Log_Write_Data(uint8_t id, uint16_t value){}
 static void Log_Write_Data(uint8_t id, int32_t value){}
@@ -883,9 +843,6 @@ static void Log_Write_Nav_Tuning() {}
 static void Log_Write_Control_Tuning() {}
 static void Log_Write_Performance() {}
 static void Log_Write_PID(uint8_t pid_id, int32_t error, int32_t p, int32_t i, int32_t d, int32_t output, float gain) {}
-#if SECONDARY_DMP_ENABLED == ENABLED
-void Log_Write_DMP() {}
-#endif
 static void Log_Write_Camera() {}
 static void Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}
 static int8_t process_logs(uint8_t argc, const Menu::arg *argv) {

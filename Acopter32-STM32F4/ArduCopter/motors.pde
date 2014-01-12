@@ -177,9 +177,6 @@ static void init_arm_motors()
 
     // go back to normal AHRS gains
     ahrs.set_fast_gains(false);
-#if SECONDARY_DMP_ENABLED == ENABLED
-    ahrs2.set_fast_gains(false);
-#endif
 
     // enable gps velocity based centrefugal force compensation
     ahrs.set_correct_centrifugal(true);
@@ -251,7 +248,7 @@ static void pre_arm_checks(bool display_failure)
     // check Compass
     if ((g.arming_check == ARMING_CHECK_ALL) || (g.arming_check & ARMING_CHECK_COMPASS)) {
         // check the compass is healthy
-        if(!compass.healthy) {
+        if(!compass.healthy()) {
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not healthy"));
             }
@@ -276,7 +273,7 @@ static void pre_arm_checks(bool display_failure)
         }
 
         // check for unreasonable mag field length
-        float mag_field = pythagorous3(compass.mag_x, compass.mag_y, compass.mag_z);
+        float mag_field = compass.get_field().length();
         if (mag_field > COMPASS_MAGFIELD_EXPECTED*1.65 || mag_field < COMPASS_MAGFIELD_EXPECTED*0.35) {
             if (display_failure) {
                 gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
@@ -414,9 +411,17 @@ static bool pre_arm_gps_checks(bool display_failure)
     float speed_cms = inertial_nav.get_velocity().length();     // speed according to inertial nav in cm/s
 
     // ensure GPS is ok and our speed is below 50cm/s
-    if (!GPS_ok() || g_gps->hdop > g.gps_hdop_good || gps_glitch.glitching() || speed_cms == 0 || speed_cms > PREARM_MAX_VELOCITY_CMS) {
+    if (!GPS_ok() || gps_glitch.glitching() || speed_cms == 0 || speed_cms > PREARM_MAX_VELOCITY_CMS) {
         if (display_failure) {
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Bad GPS Pos"));
+        }
+        return false;
+    }
+
+    // warn about hdop separately - to prevent user confusion with no gps lock
+    if (g_gps->hdop > g.gps_hdop_good) {
+        if (display_failure) {
+            gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: High GPS HDOP"));
         }
         return false;
     }

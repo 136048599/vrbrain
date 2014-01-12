@@ -70,6 +70,16 @@ static int16_t read_sonar(void)
 
 static void init_compass()
 {
+/*
+    if (compass_ext.init() && compass_ext.read()){
+	cliSerial->println_P(PSTR("External Compass Detected!"));
+	compass = &compass_ext;
+    } else if(compass_int.init() && compass_int.read())  {
+	compass = &compass_int;
+	cliSerial->println_P(PSTR("Internal Compass Detected!"));
+	//compass = compass_int;
+    }else{
+    */
     if (!compass.init() || !compass.read()) {
         // make sure we don't pass a broken compass to DCM
         cliSerial->println_P(PSTR("COMPASS INIT ERROR"));
@@ -77,9 +87,6 @@ static void init_compass()
         return;
     }
     ahrs.set_compass(&compass);
-#if SECONDARY_DMP_ENABLED == ENABLED
-    ahrs2.set_compass(&compass);
-#endif
 }
 
 static void init_optflow()
@@ -126,7 +133,12 @@ static void read_battery(void)
 // RC_CHANNELS_SCALED message
 void read_receiver_rssi(void)
 {
-    rssi_analog_source->set_pin(g.rssi_pin);
-    float ret = rssi_analog_source->voltage_average() * 50;
-    receiver_rssi = constrain_int16(ret, 0, 255);
+    // avoid divide by zero
+    if (g.rssi_range <= 0) {
+        receiver_rssi = 0;
+    }else{
+        rssi_analog_source->set_pin(g.rssi_pin);
+        float ret = rssi_analog_source->voltage_average() * 255 / g.rssi_range;
+        receiver_rssi = constrain_int16(ret, 0, 255);
+    }
 }
