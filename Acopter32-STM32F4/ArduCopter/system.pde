@@ -340,6 +340,7 @@ static bool mode_requires_GPS(uint8_t mode) {
         case CIRCLE:
         case POSITION:
         case DRIFT:
+        case HYBRID:    // ST-JD
             return true;
         default:
             return false;
@@ -479,7 +480,7 @@ static bool set_mode(uint8_t mode)
             set_yaw_mode(YAW_DRIFT);
             set_roll_pitch_mode(ROLL_PITCH_DRIFT);
             set_nav_mode(NAV_NONE);
-            set_throttle_mode(THROTTLE_MANUAL_TILT_COMPENSATED);
+            set_throttle_mode(DRIFT_THR);
             break;
 
         case SPORT:
@@ -492,6 +493,16 @@ static bool set_mode(uint8_t mode)
             acro_roll = ahrs.roll_sensor;
             acro_pitch = ahrs.pitch_sensor;
             control_yaw = ahrs.yaw_sensor;
+            break;
+            
+        // ST-JD Hybrid mode
+		case HYBRID:
+			if (GPS_ok() || ignore_checks) {	
+				success = true;
+				set_yaw_mode(HYBRID_YAW);
+				set_roll_pitch_mode(HYBRID_RP);
+				set_throttle_mode(HYBRID_THR);
+			}
             break;
 
         default:
@@ -640,6 +651,9 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case SPORT:
         port->print_P(PSTR("SPORT"));
         break;
+    case HYBRID:		// ST-JD Hybrid
+    port->print_P(PSTR("HYBRID"));
+    break;
     default:
         port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
         break;

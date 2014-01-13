@@ -30,7 +30,7 @@
 /*------------EXTERNAL COMPASS----------------*/
 /* To use external compass uncomment this line. */
 /* this is still beta and only works by tweaking the libraries. */
-#define COMPASS_EXT
+//#define COMPASS_EXT
 /*-----------ND EXTERNAL COMPASS--------------*/
 
 //#define FRAME_CONFIG OCTA_FRAME
@@ -80,3 +80,24 @@
 //#define USERHOOK_MEDIUMLOOP userhook_MediumLoop();        // for code to be run at 10hz
 //#define USERHOOK_SLOWLOOP userhook_SlowLoop();            // for code to be run at 3.3hz
 //#define USERHOOK_SUPERSLOWLOOP userhook_SuperSlowLoop();  // for code to be run at 1hz
+
+// ST-JD
+// Flight modes
+// ------------
+// Flight mode roll, pitch, yaw, throttle and navigation definitions
+// HYBRID Mode
+#ifndef HYBRID_YAW
+ # define HYBRID_YAW           YAW_HOLD
+#endif
+
+#ifndef HYBRID_RP
+ # define HYBRID_RP            ROLL_PITCH_HYBRID
+#endif
+
+#ifndef HYBRID_THR
+ # define HYBRID_THR           THROTTLE_HOLD
+#endif
+
+#ifndef HYBRID_NAV
+ # define HYBRID_NAV           NAV_LOITER
+#endif

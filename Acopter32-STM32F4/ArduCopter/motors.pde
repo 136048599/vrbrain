@@ -24,7 +24,8 @@ static void arm_motors_check()
     }
 
     // allow arming/disarming in Loiter and AltHold if landed
-    if (ap.land_complete && (control_mode == LOITER || control_mode == ALT_HOLD)) {
+	// JD-ST : added Hybrid mode
+    if (ap.land_complete && (control_mode == LOITER || control_mode == ALT_HOLD || control_mode == HYBRID)) {
         allow_arming = true;
     }
 
@@ -503,6 +504,9 @@ static void init_disarm_motors()
 
     // log disarm to the dataflash
     Log_Write_Event(DATA_DISARMED);
+
+    // suspend logging
+    DataFlash.EnableWrites(false);
 
     // disable gps velocity based centrefugal force compensation
     ahrs.set_correct_centrifugal(false);
