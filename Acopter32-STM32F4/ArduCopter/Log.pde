@@ -48,6 +48,7 @@ print_log_menu(void)
         if (g.log_bitmask & MASK_LOG_OPTFLOW) cliSerial->printf_P(PSTR(" OPTFLOW"));
         if (g.log_bitmask & MASK_LOG_COMPASS) cliSerial->printf_P(PSTR(" COMPASS"));
         if (g.log_bitmask & MASK_LOG_CAMERA) cliSerial->printf_P(PSTR(" CAMERA"));
+        if (g.log_bitmask & MASK_LOG_ROI) cliSerial->printf_P(PSTR(" ROI"));
     }
 
     cliSerial->println();
@@ -138,6 +139,7 @@ select_logs(uint8_t argc, const Menu::arg *argv)
         TARG(OPTFLOW);
         TARG(COMPASS);
         TARG(CAMERA);
+        TARG(ROI);
  #undef TARG
     }
 
@@ -652,6 +654,32 @@ static void Log_Write_Camera()
 #endif
 }
 
+
+struct PACKED log_Roi {
+    LOG_PACKET_HEADER;
+    uint32_t gps_time;
+    uint16_t gps_week;
+    int32_t  latitude;
+    int32_t  longitude;
+    int32_t  altitude;
+    uint8_t  enabled;
+};
+
+// Write a Roi packet
+static void Log_Write_Roi(struct Location *roi_loc)
+{
+    struct log_Roi pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_ROI_MSG),
+        gps_time    : g_gps->time_week_ms,
+        gps_week    : g_gps->time_week,
+        latitude    : roi_loc->lat,
+        longitude   : roi_loc->lng,
+        altitude    : roi_loc->alt,
+        enabled     : roi_loc->p1
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Error {
     LOG_PACKET_HEADER;
     uint8_t sub_system;
@@ -664,7 +692,7 @@ static void Log_Write_Error(uint8_t sub_system, uint8_t error_code)
     struct log_Error pkt = {
         LOG_PACKET_HEADER_INIT(LOG_ERROR_MSG),
         sub_system    : sub_system,
-        error_code    : error_code,
+        error_code    : error_code
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -713,6 +741,8 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "DFLT",  "Bf",         "Id,Value" },
     { LOG_CAMERA_MSG, sizeof(log_Camera),                 
       "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
+    { LOG_ROI_MSG, sizeof(log_Roi),
+      "ROI",   "IHLLeB",   "GPSTime,GPSWeek,Lat,Lng,Alt,Enable" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
 };
@@ -741,8 +771,14 @@ static void start_logging()
     if (g.log_bitmask != 0) {
         if (!ap.logging_started) {
             ap.logging_started = true;
+            in_mavlink_delay = true;
             DataFlash.StartNewLog();
+            in_mavlink_delay = false;
             DataFlash.Log_Write_Message_P(PSTR(FIRMWARE_STRING));
+
+#if defined(PX4_GIT_VERSION) && defined(NUTTX_GIT_VERSION)
+            DataFlash.Log_Write_Message_P(PSTR("PX4: " PX4_GIT_VERSION " NuttX: " NUTTX_GIT_VERSION));
+#endif
 
             // write system identifier as well if available
             char sysid[40];

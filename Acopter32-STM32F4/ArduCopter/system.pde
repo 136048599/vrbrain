@@ -95,6 +95,7 @@ static void init_ardupilot()
     hal.uartA->begin(SERIAL0_BAUD, 512, 128);
 #endif
 
+    hal.uartA->set_blocking_writes(false);
     // GPS serial port.
     //
 #if GPS_PROTOCOL != GPS_PROTOCOL_IMU
@@ -122,6 +123,11 @@ static void init_ardupilot()
 
     // load parameters from EEPROM
     load_parameters();
+
+    BoardConfig.init();
+
+    // FIX: this needs to be the inverse motors mask
+    ServoRelayEvents.set_channel_mask(0xFFF0);
 
     relay.init();
 
@@ -263,7 +269,7 @@ static void init_ardupilot()
 #if HIL_MODE != HIL_MODE_ATTITUDE
     // read Baro pressure at ground
     //-----------------------------
-    init_barometer();
+    init_barometer(true);
 #endif
 
     // initialise sonar
