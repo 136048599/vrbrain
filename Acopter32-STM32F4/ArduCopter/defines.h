@@ -268,9 +268,8 @@
 #define MASK_LOG_OPTFLOW                (1<<11)
 #define MASK_LOG_PID                    (1<<12) // deprecated
 #define MASK_LOG_COMPASS                (1<<13)
-#define MASK_LOG_INAV                   (1<<14) // deprecated
 #define MASK_LOG_CAMERA                 (1<<15)
-#define MASK_LOG_ROI                    (1<<16)
+#define MASK_LOG_ROI                    (1<<14)
 
 // DATA - event logging
 #define DATA_MAVLINK_FLOAT              1
