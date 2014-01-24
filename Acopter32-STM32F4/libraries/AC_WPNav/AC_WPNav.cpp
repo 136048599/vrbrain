@@ -60,7 +60,7 @@ const AP_Param::GroupInfo AC_WPNav::var_info[] PROGMEM = {
     // @Increment: 10
     // @User: Standard
     AP_GROUPINFO("ACCEL",       5, AC_WPNav, _wp_accel_cms, WPNAV_ACCELERATION),
-	
+
     //*********************************************************************
     // ST-JD Hybrid params
     //*********************************************************************
@@ -155,7 +155,7 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
 {
     AP_Param::setup_object_defaults(this, var_info);
 
-    // calculate loiter leash
+    // initialise leash lengths
     calculate_wp_leash_length(true);
     calculate_loiter_leash_length();
     loiter_reset=true;      // ST-JD
@@ -228,9 +228,9 @@ void AC_WPNav::init_loiter_target(const Vector3f& position, const Vector3f& velo
 
     // set last velocity to current velocity
     // To-Do: remove the line below by instead forcing reset_I to be called on the first loiter_update call
-    // ST-JD commented: _vel_last = _inav->get_velocity();
-	//_vel_last = _inav->get_velocity();
-    loiter_reset=true; // ST-JD
+	// ST-JD commented: _vel_last = _inav->get_velocity();
+    //_vel_last = _inav->get_velocity();
+	loiter_reset=true; // ST-JD
 }
 
 /// move_loiter_target - move loiter target by velocity provided in front/right directions in cm/s
@@ -320,10 +320,9 @@ void AC_WPNav::update_loiter()
     float dt = (now - _loiter_last_update) / 1000.0f;
 
     // catch if we've just been started
-    if ((dt>=1.0f)||loiter_reset) {      // ST-JD : add "or loiter_reset"
-
+    if ((dt>=1.0)||loiter_reset) {      // ST-JD : add "or loiter_reset"
         dt = 0.0f;
-		loiter_reset=false;             // ST-JD
+        loiter_reset=false;             // ST-JD
         reset_I();
         _loiter_step = 0;
     }
@@ -630,7 +629,7 @@ void AC_WPNav::update_wpnav()
 ///     converts desired position held in _target vector to desired velocity
 void AC_WPNav::get_loiter_position_to_velocity(float dt, float max_speed_cms)
 {
-    Vector3f curr = _inav->get_position();		// ST-JD: in cm from base position
+    Vector3f curr = _inav->get_position();
     float dist_error_total;
 
     float vel_sqrt;
@@ -748,10 +747,11 @@ void AC_WPNav::reset_I()
 {
     _pid_pos_lon->reset_I();
     _pid_pos_lat->reset_I();
-    if (init_I){	    // ST_JD : init rate pid's I term to 0 for loiter mode only, not for hybrid
+    if (init_I){      // ST_JD : init rate pid's I term to 0 for loiter mode only, not for hybrid
         _pid_rate_lon->reset_I();
         _pid_rate_lat->reset_I();
     }
+
     // set last velocity to current velocity
     _vel_last = _inav->get_velocity();
 }

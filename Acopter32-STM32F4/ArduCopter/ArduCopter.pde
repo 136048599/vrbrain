@@ -641,14 +641,13 @@ static int16_t brake_roll = 0,brake_pitch = 0; //
 static float K_brake;					// ST-JD
 static float wind_comp_x, wind_comp_y;// ST-JD : wind compensation vector, averaged I terms from loiter controller
 static int16_t wind_offset_roll,wind_offset_pitch;	// ST-JD : wind offsets for pitch/roll
-
-//static float speed_max_braking;	                // m/s -empirically evaluated but works for all configurations, set the brake_decrease at (almost) brake rate
 static int16_t timeout_roll, timeout_pitch; 	// seconds - time allowed for the braking to complete, this timeout will be updated at half-braking
 static bool timeout_roll_updated, timeout_pitch_updated; 	// Allow the timeout to be updated only once per braking.
 static int16_t brake_max_roll, brake_max_pitch; 	         // used to detect half braking
 static int16_t loiter_stab_timer;		// loiter stabilization timer: we read pid's I terms in wind_comp only after this time from loiter start
 static float brake_loiter_mix;		    // varies from 0 to 1, allows a smooth loiter engage
 static int8_t  update_wind_offset_timer;	// update wind_offset decimator (10Hz)
+
 ////////////////////////////////////////////////////////////////////////////////
 // CH7 and CH8 save waypoint control
 ////////////////////////////////////////////////////////////////////////////////
@@ -1600,29 +1599,25 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
         case ROLL_PITCH_AUTO:
         case ROLL_PITCH_STABLE_OF:
         case ROLL_PITCH_DRIFT:
+        case ROLL_PITCH_LOITER:
         case ROLL_PITCH_SPORT:
             roll_pitch_initialised = true;
             break;
-		case ROLL_PITCH_HYBRID:         // ST-JD : Hybrid mode
-			if( ap.home_is_set ) 
-			{		
-				K_brake=(15.0f*(float)wp_nav._brake_rate+95.0f)/100.0f;
+        case ROLL_PITCH_HYBRID:         // ST-JD : Hybrid mode
+            K_brake=(15.0f*(float)wp_nav._brake_rate+95.0f)/100.0f;
+            if (ap.land_complete) {
                 hybrid_mode_roll=3;				// Loiter start
-				hybrid_mode_pitch=3;			// Loiter start
-                wind_comp_x=wind_comp_y=0;                  // Init wind_comp (ef). For now, resetted each time hybrid is switched on
-                wind_offset_roll=0;             // Init offset angles
-				wind_offset_pitch=0;
-                update_wind_offset_timer=0;     // Init wind offset computation timer          
-				loiter_stab_timer=LOITER_STAB_TIMER;
-				roll_pitch_initialised = true;	// require gps lock
-			}
-            break;
-
-        case ROLL_PITCH_LOITER:
-            // require gps lock
-            if( ap.home_is_set ) {
-                roll_pitch_initialised = true;
+                hybrid_mode_pitch=3;			// Loiter start
+            }else{
+                hybrid_mode_roll=1;				// Alt_hold like to avoid hard twitch if hybrid enabled in flight
+                hybrid_mode_pitch=1;			//               
             }
+            wind_comp_x=wind_comp_y=0;      // Init wind_comp (ef). For now, resetted each time hybrid is switched on
+            wind_offset_roll=0;             // Init offset angles
+            wind_offset_pitch=0;
+            update_wind_offset_timer=0;     // Init wind offset computation timer          
+            loiter_stab_timer=LOITER_STAB_TIMER;
+            roll_pitch_initialised = true;
             break;
 
 #if AUTOTUNE == ENABLED
@@ -1661,10 +1656,9 @@ void exit_roll_pitch_mode(uint8_t old_roll_pitch_mode)
 // 100hz update rate
 void update_roll_pitch_mode(void)
 {
-	//const Vector3f &vel= inertial_nav.get_velocity();  // current velocity in cm/s;
 	Vector3f vel;               // ST-JD : Used for Hybrid_mode
 	float vel_fw, vel_right;    // ST-JD : Used for Hybrid_mode
-		
+    
     switch(roll_pitch_mode) {
     case ROLL_PITCH_ACRO:
         // copy user input for reporting purposes
@@ -1745,8 +1739,8 @@ void update_roll_pitch_mode(void)
         get_stabilize_roll(control_roll);
         get_stabilize_pitch(control_pitch);
         break;
-
-	case ROLL_PITCH_HYBRID:			// ST_JD : Hybrid mode is STAB Roll/Pitch when stick input and automatic  braking +loitering on release
+        
+	case ROLL_PITCH_HYBRID:			// ST-JD : Hybrid mode is STAB Roll/Pitch when stick input and automatic  braking +loitering on release
 		
 		update_simple_mode();       //TO-DO check if useless or if we keep it
         
@@ -1914,7 +1908,7 @@ void update_roll_pitch_mode(void)
         get_stabilize_roll(constrain_int16(control_roll,-g.angle_max,g.angle_max));
         get_stabilize_pitch(constrain_int16(control_pitch,-g.angle_max,g.angle_max));
 		break;
-        
+
     case ROLL_PITCH_SPORT:
         // apply SIMPLE mode transform
         update_simple_mode();
@@ -2312,7 +2306,7 @@ static void update_altitude()
 #endif  // HIL_MODE == HIL_MODE_ATTITUDE
 
     // write altitude info to dataflash logs
-    if ((g.log_bitmask & MASK_LOG_CTUN) && motors.armed()) {
+    if (g.log_bitmask & MASK_LOG_CTUN) {
         Log_Write_Control_Tuning();
     }
 }
@@ -2479,6 +2473,11 @@ static void tuning(){
     case CH6_SONAR_GAIN:
         // set sonar gain
         g.sonar_gain.set(tuning_value);
+        break;
+
+    case CH6_LOIT_SPEED:
+        // set max loiter speed to 0 ~ 1000 cm/s
+        wp_nav.set_loiter_velocity(g.rc_6.control_in);
         break;
     }
 }

@@ -153,7 +153,6 @@ AP_InertialSensor::_init_gyro()
     bool converged[num_gyros];
 
     // cold start
-    hal.scheduler->delay(100);
     hal.console->print_P(PSTR("Init Gyro"));
 
     // flash leds to tell user to keep the IMU still

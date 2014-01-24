@@ -263,7 +263,7 @@ static void init_ardupilot()
 #if HIL_MODE != HIL_MODE_ATTITUDE
     // read Baro pressure at ground
     //-----------------------------
-    init_barometer();
+    init_barometer(true);
 #endif
 
     // initialise sonar
@@ -652,8 +652,8 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
         port->print_P(PSTR("SPORT"));
         break;
     case HYBRID:		// ST-JD Hybrid
-    port->print_P(PSTR("HYBRID"));
-    break;
+		port->print_P(PSTR("HYBRID"));
+		break;
     default:
         port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
         break;
