@@ -95,7 +95,6 @@ static void init_ardupilot()
     hal.uartA->begin(SERIAL0_BAUD, 512, 128);
 #endif
 
-    hal.uartA->set_blocking_writes(false);
     // GPS serial port.
     //
 #if GPS_PROTOCOL != GPS_PROTOCOL_IMU

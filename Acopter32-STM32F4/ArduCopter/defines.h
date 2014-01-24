@@ -90,10 +90,6 @@
 #define OCTA_QUAD_FRAME 7
 #define SINGLE_FRAME 8
 
-#define PLUS_FRAME 0
-#define X_FRAME 1
-#define V_FRAME 2
-
 // Internal defines, don't edit and expect things to work
 // -------------------------------------------------------
 
@@ -268,8 +264,8 @@
 #define MASK_LOG_OPTFLOW                (1<<11)
 #define MASK_LOG_PID                    (1<<12) // deprecated
 #define MASK_LOG_COMPASS                (1<<13)
-#define MASK_LOG_CAMERA                 (1<<15)
 #define MASK_LOG_ROI                    (1<<14)
+#define MASK_LOG_CAMERA                 (1<<15)
 
 // DATA - event logging
 #define DATA_MAVLINK_FLOAT              1
