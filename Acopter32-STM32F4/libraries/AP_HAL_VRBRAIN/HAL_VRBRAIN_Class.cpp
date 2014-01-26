@@ -23,8 +23,8 @@ using namespace VRBRAIN;
 
 // XXX make sure these are assigned correctly
 static VRBRAINUARTDriver uartADriver(_USART1,1);
-static VRBRAINUARTDriver uartBDriver(_USART2,0);
-static VRBRAINUARTDriver uartCDriver(_USART3,0);
+static VRBRAINUARTDriver uartBDriver(_USART3,0);
+static VRBRAINUARTDriver uartCDriver(_USART2,0);
 static VRBRAINSemaphore  i2cSemaphore;
 static VRBRAINSemaphore  i2c2Semaphore;
 static VRBRAINI2CDriver  i2cDriver(_I2C2,&i2cSemaphore);
@@ -45,6 +45,7 @@ HAL_VRBRAIN::HAL_VRBRAIN() :
       &uartADriver,
       &uartBDriver,
       &uartCDriver,
+	  NULL,
       &i2cDriver,
       &i2c2Driver,
       &spiDeviceManager,

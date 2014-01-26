@@ -818,7 +818,7 @@ static const struct LogStructure log_structure[] PROGMEM = {
     { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),       
       "NTUN", "Ecffffffffee",    "WPDst,WPBrg,PErX,PErY,DVelX,DVelY,VelX,VelY,DAcX,DAcY,DRol,DPit" },
     { LOG_CONTROL_TUNING_MSG, sizeof(log_Control_Tuning),     
-      "CTUN", "heefhhhhh",   "ThrIn,SonAlt,BarAlt,WPAlt,DesSonAlt,AngBst,CRate,ThrOut,DCRate" },
+      "CTUN", "hcefchhhh",   "ThrIn,SonAlt,BarAlt,WPAlt,DesSonAlt,AngBst,CRate,ThrOut,DCRate" },
     { LOG_COMPASS_MSG, sizeof(log_Compass),             
       "MAG", "hhhhhhhhh",    "MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" },
     { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 

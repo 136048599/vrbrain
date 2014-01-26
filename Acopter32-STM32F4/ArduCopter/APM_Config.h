@@ -30,10 +30,10 @@
 /*------------EXTERNAL COMPASS----------------*/
 /* To use external compass uncomment this line. */
 /* this is still beta and only works by tweaking the libraries. */
-//#define COMPASS_EXT
+#define COMPASS_EXT
 /*-----------ND EXTERNAL COMPASS--------------*/
 
-//#define FRAME_CONFIG OCTA_FRAME
+#define FRAME_CONFIG QUAD_FRAME
 //#define FRAME_ORIENTATION      PLUS_FRAME
 
  //#define GPS_PROTOCOL           GPS_PROTOCOL_NONE

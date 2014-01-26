@@ -13,7 +13,7 @@
 #define HAL_BOARD_APM1     1
 #define HAL_BOARD_APM2     2
 #define HAL_BOARD_AVR_SITL 3
-#define HAL_BOARD_SMACCM   4
+#define HAL_BOARD_SMACCM   4 // unused
 #define HAL_BOARD_PX4      5
 #define HAL_BOARD_FLYMAPLE 6
 #define HAL_BOARD_LINUX    7
