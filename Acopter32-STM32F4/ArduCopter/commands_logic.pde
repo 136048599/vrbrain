@@ -837,9 +837,11 @@ static void do_guided(const struct Location *cmd)
         }
     }
 
+    wp_nav.set_fast_waypoint(true);
+
     // set wp_nav's destination
     Vector3f pos = pv_location_to_vector(*cmd);
-    wp_nav.set_destination(pos);
+    wp_nav.set_origin_and_destination(inertial_nav.get_position(),pos);
 
     // initialise wp_bearing for reporting purposes
     wp_bearing = wp_nav.get_bearing_to_destination();
