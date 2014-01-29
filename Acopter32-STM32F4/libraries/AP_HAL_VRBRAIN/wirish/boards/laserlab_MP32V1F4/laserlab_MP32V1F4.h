@@ -26,9 +26,9 @@ void boardInit(void);
 #define STM32_PCLK2   (CYCLES_PER_MICROSECOND*1000000/2)
 
 #define BOARD_LED_PIN           38
-#define BOARD_IMULED1_PIN       71
-#define BOARD_IMULED2_PIN       74
-#define BOARD_IMULED3_PIN       69
+#define BOARD_IMULED1_PIN       59 //71
+#define BOARD_IMULED2_PIN       62 //74
+#define BOARD_IMULED3_PIN       57 //69
 #define BOARD_BUTTON_PIN        18
 
 #define BOARD_NR_USARTS         5
@@ -60,7 +60,7 @@ void boardInit(void);
 #define BOARD_SPI3_SCK_PIN      16
 
 #define MPU6000_CS_PIN			77
-#define MPU6000_INT_PIN			99
+#define MPU6000_INT_PIN			20 //VRBRAIN50 //99
 
 #define BOARD_NR_GPIO_PINS      103
 #define BOARD_NR_PWM_PINS       18

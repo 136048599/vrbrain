@@ -21,14 +21,14 @@ void VRBRAINSPIDeviceManager::init(void* machtnichts) {
     _mpu6k = new VRBRAINSPI2DeviceDriver(77);
     _mpu6k->init();
 
-    _mpu6k_ext = new VRBRAINSPI3DeviceDriver(22);
+    _mpu6k_ext = new VRBRAINSPI2DeviceDriver(8);
     _mpu6k_ext->init();
 
 
     _ms5611 = new VRBRAINSPI1DeviceDriver(94);
     _ms5611->init();
 
-    _dataflash  = new VRBRAINSPI1DeviceDriver(83);
+    _dataflash  = new VRBRAINSPI3DeviceDriver(83);
     _dataflash ->init();
 
 }

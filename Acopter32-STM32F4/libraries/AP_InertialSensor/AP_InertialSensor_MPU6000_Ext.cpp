@@ -196,7 +196,7 @@ uint16_t AP_InertialSensor_MPU6000_Ext::_init_sensor( Sample_rate sample_rate )
        up PE6 to the hal.gpio abstraction.
        (It is not a valid pin under Arduino.) */
 #if  CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-    _drdy_pin = hal.gpio->channel(91);
+    _drdy_pin = hal.gpio->channel(20);
 #else
     _drdy_pin = hal.gpio->channel(70);
 #endif

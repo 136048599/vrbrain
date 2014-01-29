@@ -99,7 +99,7 @@ void HAL_VRBRAIN::init(int argc,char* const argv[]) const
 
   spi->init(NULL);
 
-  detect_compass();
+  //detect_compass();
 
   analogin->init(NULL);
   storage->init(NULL);

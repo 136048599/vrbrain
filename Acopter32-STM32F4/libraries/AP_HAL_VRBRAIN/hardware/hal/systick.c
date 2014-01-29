@@ -70,10 +70,30 @@ void SysTick_Handler(void)
     }
 }
 
+/*******************************************************************************
 
+Bit-banding demo
+
+*******************************************************************************/
+#define ODRA 0x4001080C // Output Data Registers by GPIOx
+#define ODRB 0x40010C0C
+#define ODRC 0x4001100C
+#define ODRD 0x4001140C
+#define ODRE 0x4001180C
+
+#define PBBB 0x40000000 // Peripheral Bit-band Base
+#define PBBA 0x42000000 // Aliased Peripheral Bit-band Base
+
+#define PD(Pin) (*( (volatile unsigned long *)((ODRD - PBBB) * 0x20 + (4 * Pin) + PBBA) ))
+#define LED_GRN    PD(12)  // Port D, Pin 12
+#define LED_YLW    PD(13)  // Port D, Pin 13
+#define LED_RED    PD(14)  // Port D, Pin 14
+
+/*
 #define LED_GRN (*((unsigned long int *) 0x424102B4))
 #define LED_YLW (*((unsigned long int *) 0x424102B8))
 #define LED_RED (*((unsigned long int *) 0x424102BC))
+*/
 
 void HardFault_Handler(void)
 {

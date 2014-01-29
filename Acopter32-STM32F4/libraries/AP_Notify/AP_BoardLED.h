@@ -61,14 +61,21 @@
  # define HAL_GPIO_LED_ON           LOW
  # define HAL_GPIO_LED_OFF          HIGH
 #elif CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
- # define HAL_GPIO_A_LED_PIN        19
- # define HAL_GPIO_B_LED_PIN        20
- # define HAL_GPIO_C_LED_PIN        21
- # define HAL_GPIO_LED_ON           HIGH
- # define HAL_GPIO_LED_OFF          LOW
+ # define HAL_GPIO_A_LED_PIN        62//VRBRAIN 5.0//19 VRBRAIN 4.0
+ # define HAL_GPIO_B_LED_PIN        57//VRBRAIN 5.0//20
+ # define HAL_GPIO_C_LED_PIN        59//VRBRAIN 5.0////21
+ # define HAL_GPIO_LED_ON           LOW  //VRBRAIN 5.0 // HIGH //VRBRAIN 4.0
+ # define HAL_GPIO_LED_OFF          HIGH //VRBRAIN 5.0 // LOW //VRBRAIN 4.0
 #else
 #error "Unknown board type in AP_Notify"
 #endif
+
+#ifndef LOW
+ #define LOW  0x0
+#endif
+
+
+
 
 class AP_BoardLED
 {

@@ -18,10 +18,10 @@ public:
 private:    
     VRBRAINSPI2DeviceDriver* _mpu6k;
 
-    VRBRAINSPI3DeviceDriver* _mpu6k_ext;
+    VRBRAINSPI2DeviceDriver* _mpu6k_ext;
 
     VRBRAINSPI1DeviceDriver* _ms5611;
-    VRBRAINSPI1DeviceDriver* _dataflash;
+    VRBRAINSPI3DeviceDriver* _dataflash;
 
 };
 
