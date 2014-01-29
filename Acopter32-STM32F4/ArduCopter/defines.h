@@ -193,6 +193,7 @@
 #define WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP               1   // auto pilot will face next waypoint or home during rtl
 #define WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL    2   // auto pilot will face next waypoint except when doing RTL at which time it will stay in it's last
 #define WP_YAW_BEHAVIOR_LOOK_AHEAD                    3   // auto pilot will look ahead during missions and rtl (primarily meant for traditional helicotpers)
+#define WP_YAW_BEHAVIOR_LOOK_AT_LOCATION              4   // auto pilot will look at location stored in yaw_look_at_WP (for ROI)
 
 
 // Waypoint options

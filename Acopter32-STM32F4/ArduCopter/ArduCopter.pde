@@ -1545,6 +1545,10 @@ uint8_t get_wp_yaw_mode(bool rtl)
             return YAW_LOOK_AHEAD;
             break;
 
+        case WP_YAW_BEHAVIOR_LOOK_AT_LOCATION:
+            return YAW_LOOK_AT_LOCATION;
+            break;
+
         default:
             return YAW_HOLD;
             break;

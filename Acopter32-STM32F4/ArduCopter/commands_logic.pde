@@ -837,7 +837,6 @@ static void do_guided(const struct Location *cmd)
         }
     }
 
-    wp_nav.set_fast_waypoint(true);
 
     // set wp_nav's destination
     Vector3f pos = pv_location_to_vector(*cmd);
