@@ -54,7 +54,7 @@ static void reset_control_switch()
     read_control_switch();
 }
 
-// read_3pos_switch 
+// read_3pos_switch
 static uint8_t read_3pos_switch(int16_t radio_in){
     if (radio_in < AUX_SWITCH_PWM_TRIGGER_LOW) return AUX_SWITCH_LOW;      // switch is in low position
     if (radio_in > AUX_SWITCH_PWM_TRIGGER_HIGH) return AUX_SWITCH_HIGH;    // switch is in high position
