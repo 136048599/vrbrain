@@ -148,6 +148,7 @@ public:
         k_param_telem_delay,
         k_param_gcs2,
         k_param_serial2_baud,
+        k_param_gps_ext,
 
         //
         // 140: Sensor parameters
@@ -294,6 +295,7 @@ public:
 #if MAVLINK_COMM_NUM_BUFFERS > 2
     AP_Int8         serial2_baud;
 #endif
+    AP_Int8	    gps_ext;
     AP_Int8         telem_delay;
 
     AP_Int16        rtl_altitude;
