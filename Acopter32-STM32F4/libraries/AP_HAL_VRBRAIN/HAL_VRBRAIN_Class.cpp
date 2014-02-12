@@ -89,7 +89,7 @@ void HAL_VRBRAIN::init(int argc,char* const argv[]) const
   scheduler->init(NULL);
 
   uartA->begin(57600);
-  uartC->begin(57600);
+  //uartC->begin(57600);
   //uartC->set_blocking_writes(true);
 
 
@@ -103,6 +103,7 @@ void HAL_VRBRAIN::init(int argc,char* const argv[]) const
 
   analogin->init(NULL);
   storage->init(NULL);
+
   rcin->init(NULL);
   rcout->init(NULL);
 

@@ -126,7 +126,7 @@ static void init_ardupilot()
     } else {
 	// standard gps running. Note that we need a 256 byte buffer for some
 	// GPS types (eg. UBLOX)
-	hal.uartB->begin(38400, 256, 16);
+	hal.uartB->begin(38400, 256, 16, 2);
     }
 #endif
 
@@ -193,7 +193,7 @@ static void init_ardupilot()
     if(g.gps_ext > 0) {
 	hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD), 128, 128, 2);
     } else {
-	hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD), 128, 128);
+	hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD), 128, 128, 3);
     }
 	gcs[1].init(hal.uartC);
 #endif

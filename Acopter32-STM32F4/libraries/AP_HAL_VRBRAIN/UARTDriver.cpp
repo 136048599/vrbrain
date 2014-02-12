@@ -39,6 +39,8 @@ VRBRAINUARTDriver::VRBRAINUARTDriver(struct usart_dev *usart, uint8_t use_usb):
 {
 }
 
+extern const AP_HAL::HAL& hal;
+
 void VRBRAINUARTDriver::begin(uint32_t baud) {
 
     if(_usb == 1)
