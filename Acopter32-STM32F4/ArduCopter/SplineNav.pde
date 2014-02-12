@@ -261,11 +261,11 @@ Vector3f SplineNav::next_spline_waypoint() {
     int next_cmd_index = spline_next_cmd_index;
     int n = g.command_total.get()-1; // total number of commands
     for (int i=0; i<n; i++) { // loop for a max of total number of commands
-        if (next_cmd_index < n) next_cmd_index++;
-        else if (SPLINE_LOOP) {
+        if (next_cmd_index < n){
+            next_cmd_index++;
+        } else if (SPLINE_LOOP) {
             next_cmd_index=1;
-        }
-        else { // out of commands
+        } else { // out of commands
             spline_end = true; // spline curve is ending
             
             // reset to previous index to return the last waypoint again

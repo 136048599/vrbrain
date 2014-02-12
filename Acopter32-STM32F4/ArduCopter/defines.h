@@ -26,6 +26,7 @@
 #define YAW_DRIFT                       8       //
 #define YAW_RESETTOARMEDYAW				9       // point towards heading at time motors were armed
 #define YAW_SPLINE                      10      // spline mode yaw control
+#define YAW_FOLLOWME                      11      // spline mode yaw control
 
 #define ROLL_PITCH_STABLE           0       // pilot input roll, pitch angles
 #define ROLL_PITCH_ACRO             1       // pilot inputs roll, pitch rotation rates in body frame
@@ -150,7 +151,8 @@
 #define DRIFT 11                        // DRIFT mode (Note: 12 is no longer used)
 #define SPORT 13                        // earth frame rate control
 #define SPLINE 14                       // AUTO control
-#define NUM_MODES 15
+#define FOLLOWME 15
+#define NUM_MODES 16
 
 
 // CH_6 Tuning
@@ -206,6 +208,7 @@
 #define NAV_LOITER      2
 #define NAV_WP          3
 #define NAV_SPLINE      4
+#define NAV_FOLLOWME      5
 
 // Yaw behaviours during missions - possible values for WP_YAW_BEHAVIOR parameter
 #define WP_YAW_BEHAVIOR_NONE                          0   // auto pilot will never control yaw during missions or rtl (except for DO_CONDITIONAL_YAW command received)

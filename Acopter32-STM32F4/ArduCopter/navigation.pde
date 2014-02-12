@@ -30,7 +30,7 @@ static void calc_distance_and_bearing()
     Vector3f curr = inertial_nav.get_position();
 
     // get target from loiter or wpinav controller
-    if( nav_mode == NAV_LOITER || nav_mode == NAV_CIRCLE || nav_mode == NAV_SPLINE ) {
+    if( nav_mode == NAV_LOITER || nav_mode == NAV_CIRCLE || nav_mode == NAV_SPLINE || nav_mode == NAV_FOLLOWME ) {
         wp_distance = wp_nav.get_distance_to_target();
         wp_bearing = wp_nav.get_bearing_to_target();
     }else if( nav_mode == NAV_WP ) {
@@ -101,6 +101,12 @@ static bool set_nav_mode(uint8_t new_nav_mode)
             // set start of spline to current position
             wp_nav.get_stopping_point(inertial_nav.get_position(),inertial_nav.get_velocity(),stopping_point);
             spline_nav.start(stopping_point, ahrs.yaw);
+            nav_initialised = true;
+            break;
+
+        case NAV_FOLLOWME:
+            // set start of spline to current position
+            wp_nav.get_stopping_point(inertial_nav.get_position(),inertial_nav.get_velocity(),stopping_point);
             nav_initialised = true;
             break;
 

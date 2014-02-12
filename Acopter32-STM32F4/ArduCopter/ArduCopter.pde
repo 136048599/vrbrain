@@ -133,6 +133,8 @@
 #include <AC_Sprayer.h>         // crop sprayer library
 #endif
 
+#include <SplineNav.h>
+
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
 // Configuration
@@ -143,7 +145,7 @@
 // Local modules
 #include "Parameters.h"
 #include "GCS.h"
-#include "SplineNav.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // cliSerial
@@ -1390,6 +1392,7 @@ bool set_yaw_mode(uint8_t new_yaw_mode)
                 yaw_initialised = true;
             }
             break;
+        case YAW_FOLLOWME:
         case YAW_LOOK_AT_LOCATION:
             if( ap.home_is_set ) {
                 // update bearing - assumes yaw_look_at_WP has been intialised before set_yaw_mode was called

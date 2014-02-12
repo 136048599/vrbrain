@@ -23,7 +23,7 @@
 #define SPLINE_JERK 200.0f
 
 // set to true to make SplineNav fly a closed loop
-#define SPLINE_LOOP false
+#define SPLINE_LOOP 0
 
 // max yaw overshoot in cd for spline yaw controller
 #define SPLINE_MAX_YAW_OVERSHOOT 4000

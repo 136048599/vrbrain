@@ -404,7 +404,15 @@ static bool set_mode(uint8_t mode)
                 set_yaw_mode(YAW_SPLINE);
             }
             break;
-
+        case FOLLOWME:
+            if (GPS_ok() || ignore_checks) {
+                success = true;
+                set_roll_pitch_mode(ROLL_PITCH_AUTO);
+                set_throttle_mode(THROTTLE_AUTO);
+                set_nav_mode(NAV_FOLLOWME);
+                set_yaw_mode(YAW_LOOK_AT_LOCATION);
+            }
+            break;
         case LOITER:
             if (GPS_ok() || ignore_checks) {
                 success = true;
@@ -610,6 +618,9 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
         break;
     case SPLINE:
         port->print_P(PSTR("SPLINE"));
+        break;
+    case FOLLOWME:
+        port->print_P(PSTR("FOLLOWME"));
         break;
     case POSITION:
         port->print_P(PSTR("POSITION"));
