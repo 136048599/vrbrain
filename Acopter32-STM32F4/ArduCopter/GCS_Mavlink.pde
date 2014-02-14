@@ -1599,21 +1599,19 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
         if(packet.current == 2) {                                               //current = 2 is a flag to tell us this is a "guided mode" waypoint and not for the mission
             
-			            if(tell_command.id == MAV_CMD_DO_SET_ROI){
-        	//set the ROI for the guided mode
-			        	do_nav_roi(&tell_command);
-        	//Log_Write_Roi(&tell_command);
-
+		if(tell_command.id == MAV_CMD_DO_SET_ROI){
+		    //set the ROI for the guided mode
+		    do_nav_roi(&tell_command);
+		    //Log_Write_Roi(&tell_command);
             } else {
-			guided_WP = tell_command;
-
-            // add home alt if needed
-            if (guided_WP.options & MASK_OPTIONS_RELATIVE_ALT) {
-                guided_WP.alt += home.alt;
+        	guided_WP = tell_command;
+        	yaw_look_at_WP = tell_command;
+        	// add home alt if needed
+		if (guided_WP.options & MASK_OPTIONS_RELATIVE_ALT) {
+		    guided_WP.alt += home.alt;
+		}
+		set_mode(GUIDED);
             }
-
-            set_mode(GUIDED);
-}
             // verify we recevied the command
             mavlink_msg_mission_ack_send(
                 chan,

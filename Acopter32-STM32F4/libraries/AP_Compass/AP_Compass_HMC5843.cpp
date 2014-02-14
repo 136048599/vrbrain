@@ -171,6 +171,7 @@ AP_Compass_HMC5843::init(void)
   delay(10);
 
   // determine if we are using 5843 or 5883L
+    _base_config = 0;
   if (! write_register(ConfigRegA, SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation) ||
 	  ! read_register(ConfigRegA, &_base_config)) {
 	 healthy = false;
@@ -198,7 +199,7 @@ AP_Compass_HMC5843::init(void)
   calibration[1] = 0;
   calibration[2] = 0;
   
-  while ( success == 0 && numAttempts < 20 && good_count < 5)
+  while ( success == 0 && numAttempts < 25 && good_count < 5)
   {
       // record number of attempts at initialisation
 	  numAttempts++;
@@ -226,9 +227,10 @@ AP_Compass_HMC5843::init(void)
 	  cal[1] = fabs(expected_yz / (float)_mag_y);
 	  cal[2] = fabs(expected_yz / (float)_mag_z);
 
-	  if (cal[0] > 0.7 && cal[0] < 1.3 && 
-		  cal[1] > 0.7 && cal[1] < 1.3 && 
-		  cal[2] > 0.7 && cal[2] < 1.3) 	  {
+        if (numAttempts > 2 &&
+          cal[0] > 0.7 && cal[0] < 1.35 && 
+		  cal[1] > 0.7 && cal[1] < 1.35 && 
+		  cal[2] > 0.7 && cal[2] < 1.35) 	  {
 		 good_count++;
 		 calibration[0] += cal[0];
 		 calibration[1] += cal[1];

@@ -62,18 +62,8 @@ static void init_rc_out()
 {
 int type;
 
-#if CONFIG_APM_HARDWARE == MP32V1F1
-      type=0;        
-#endif
 
-#if CONFIG_APM_HARDWARE == MP32V3F1
-	type=1;
-#endif
-
-#if CONFIG_APM_HARDWARE == VRBRAINF4
 	type=2;
-#endif
-
 
 #ifdef PPMSUM60
         type=11;

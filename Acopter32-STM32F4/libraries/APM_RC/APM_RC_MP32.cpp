@@ -568,7 +568,7 @@ void APM_RC_MP32::Init( char board,Arduino_Mega_ISR_Registry * isr_reg , FastSer
     // Init Radio In
     _serial->println("Init Default PPM");
     InitDefaultPPM(_iboard);
-    //_serial->println("Init PPM HWD");
+    _serial->println("Init PPM HWD");
     InitPPM();
     }
     else

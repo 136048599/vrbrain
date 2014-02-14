@@ -38,7 +38,7 @@ static void process_nav_command()
 
     // point the copter and camera at a region of interest (ROI)
     case MAV_CMD_NAV_ROI:             // 80
-        do_nav_roi();
+        do_nav_roi(&command_nav_queue);
         break;
 
     default:
@@ -860,6 +860,18 @@ static void do_repeat_relay()
 //	TO-DO: add support for other features of MAV_NAV_ROI including pointing at a given waypoint
 static void do_nav_roi(struct Location *roi_loc)
 {
+    roi_mode = roi_loc->p1;
+
+    switch (roi_mode){
+    case 0:
+	//disable ROI
+	set_yaw_mode(YAW_HOLD);
+	break;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    default:
 #if MOUNT == ENABLED
 
     // check if mount type requires us to rotate the quad
@@ -881,6 +893,8 @@ static void do_nav_roi(struct Location *roi_loc)
     yaw_look_at_WP = *roi_loc;
     set_yaw_mode(YAW_LOOK_AT_LOCATION);
 #endif
+    break;
+    }
 }
 
 // do_take_picture - take a picture with the camera library

@@ -523,7 +523,11 @@ static void set_mode(byte mode)
     case LOITER:
     	ap.manual_throttle = false;
     	ap.manual_attitude = false;
-        set_yaw_mode(LOITER_YAW);
+    	if(roi_mode == 0){
+    	    set_yaw_mode(LOITER_YAW);
+    	}else{
+    	    set_yaw_mode(YAW_LOOK_AT_LOCATION);
+    	}
         set_roll_pitch_mode(LOITER_RP);
         set_throttle_mode(LOITER_THR);
         set_next_WP(&current_loc);
@@ -541,7 +545,11 @@ static void set_mode(byte mode)
     case GUIDED:
     	ap.manual_throttle = false;
     	ap.manual_attitude = false;
-        set_yaw_mode(GUIDED_YAW);
+    	if(roi_mode == 0){
+    	    set_yaw_mode(GUIDED_YAW);
+    	}else{
+    	    set_yaw_mode(YAW_LOOK_AT_LOCATION);
+    	}
         set_roll_pitch_mode(GUIDED_RP);
         set_throttle_mode(GUIDED_THR);
         wp_control = WP_MODE;
