@@ -12,8 +12,6 @@
 // to select MAVLink 1.0 in the arduino GUI build
 #define MAVLINK_SEPARATE_HELPERS
 
-#define MAVLINK_SEND_UART_BYTES(chan, buf, len) comm_send_buffer(chan, buf, len)
-
 // define our own MAVLINK_MESSAGE_CRC() macro to allow it to be put
 // into progmem
 #define MAVLINK_MESSAGE_CRC(msgid) mavlink_get_message_crc(msgid)
@@ -28,7 +26,7 @@
 // this allows us to make mavlink_message_t much smaller. It means we
 // can't support the largest messages in common.xml, but we don't need
 // those for APM
-#define MAVLINK_MAX_PAYLOAD_LEN 104
+#define MAVLINK_MAX_PAYLOAD_LEN 96
 
 #define MAVLINK_COMM_NUM_BUFFERS 2
 #include "include/mavlink/v1.0/mavlink_types.h"
@@ -157,8 +155,5 @@ uint8_t mav_var_type(enum ap_var_type t);
 
 // return CRC byte for a mavlink message ID
 uint8_t mavlink_get_message_crc(uint8_t msgid);
-
-// severity levels used in STATUSTEXT messages
-
 
 #endif // GCS_MAVLink_h
