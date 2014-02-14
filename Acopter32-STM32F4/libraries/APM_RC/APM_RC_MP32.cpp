@@ -863,7 +863,7 @@ input_channel_ch4=89;
 input_channel_ch5=12;
 input_channel_ch6=13;
 input_channel_ch7=14;
-input_channel_ch8=0;
+input_channel_ch8=15;
 
 
 //input_channel_ch5=12;
