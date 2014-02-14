@@ -1275,7 +1275,11 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             break;
 
         case MAV_CMD_NAV_ROI:
+        case MAV_CMD_DO_SET_ROI:
             param1 = tell_command.p1;                                   // MAV_ROI (aka roi mode) is held in wp's parameter but we actually do nothing with it because we only support pointing at a specific location provided by x,y and z parameters
+            x = tell_command.lat/1.0e7f;                     // local (x), global (latitude)
+            y = tell_command.lng/1.0e7f;                     // local (y), global (longitude)
+            z = tell_command.alt/1.0e2f;                     // local (z), global/relative (altitude)
             break;
 
         case MAV_CMD_CONDITION_YAW:
@@ -1539,6 +1543,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             break;
 
         case MAV_CMD_NAV_ROI:
+        case MAV_CMD_DO_SET_ROI:
             tell_command.p1 = packet.param1;                                    // MAV_ROI (aka roi mode) is held in wp's parameter but we actually do nothing with it because we only support pointing at a specific location provided by x,y and z parameters
             break;
 
@@ -1593,7 +1598,14 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         }
 
         if(packet.current == 2) {                                               //current = 2 is a flag to tell us this is a "guided mode" waypoint and not for the mission
-            guided_WP = tell_command;
+            
+			            if(tell_command.id == MAV_CMD_DO_SET_ROI){
+        	//set the ROI for the guided mode
+			        	do_nav_roi(&tell_command);
+        	//Log_Write_Roi(&tell_command);
+
+            } else {
+			guided_WP = tell_command;
 
             // add home alt if needed
             if (guided_WP.options & MASK_OPTIONS_RELATIVE_ALT) {
@@ -1601,7 +1613,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             }
 
             set_mode(GUIDED);
-
+}
             // verify we recevied the command
             mavlink_msg_mission_ack_send(
                 chan,

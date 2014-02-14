@@ -858,17 +858,17 @@ static void do_repeat_relay()
 //              and possibly rotating the copter to point at the ROI if our mount type does not support a yaw feature
 //				Note: the ROI should already be in the command_nav_queue global variable
 //	TO-DO: add support for other features of MAV_NAV_ROI including pointing at a given waypoint
-static void do_nav_roi()
+static void do_nav_roi(struct Location *roi_loc)
 {
 #if MOUNT == ENABLED
 
     // check if mount type requires us to rotate the quad
     if( camera_mount.get_mount_type() != AP_Mount::k_pan_tilt && camera_mount.get_mount_type() != AP_Mount::k_pan_tilt_roll ) {
-        yaw_look_at_WP = command_nav_queue;
+	    yaw_look_at_WP = *roi_loc;
         set_yaw_mode(YAW_LOOK_AT_LOCATION);
     }
     // send the command to the camera mount
-    camera_mount.set_roi_cmd(&command_nav_queue);
+	camera_mount.set_roi_cmd(roi_loc);
 
     // TO-DO: expand handling of the do_nav_roi to support all modes of the MAVLink.  Currently we only handle mode 4 (see below)
     //		0: do nothing
@@ -878,7 +878,7 @@ static void do_nav_roi()
     //		4: point at a target given a target id (can't be implmented)
 #else
     // if we have no camera mount aim the quad at the location
-    yaw_look_at_WP = command_nav_queue;
+    yaw_look_at_WP = *roi_loc;
     set_yaw_mode(YAW_LOOK_AT_LOCATION);
 #endif
 }
