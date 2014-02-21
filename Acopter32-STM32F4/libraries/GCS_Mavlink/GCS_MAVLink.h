@@ -25,13 +25,11 @@
 #define HAVE_CRC_ACCUMULATE
 // only two telemetry ports on APM1/APM2
 #define MAVLINK_COMM_NUM_BUFFERS 2
-#else
-#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
+#elif CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 #define MAVLINK_COMM_NUM_BUFFERS 2
 #else
 // allow three telemetry ports on other boards
 #define MAVLINK_COMM_NUM_BUFFERS 3
-#endif
 #endif
 
 #include "include/mavlink/v1.0/ardupilotmega/version.h"
