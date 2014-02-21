@@ -12,6 +12,7 @@
 #define AP_COMPASS_TYPE_HIL      0x01
 #define AP_COMPASS_TYPE_HMC5843  0x02
 #define AP_COMPASS_TYPE_HMC5883L 0x03
+# define MAG_BOARD_ORIENTATION ROTATION_YAW_180
 
 class Compass
 {
@@ -58,14 +59,6 @@ public:
     /// @returns heading in radians
 	///
 	virtual float calculate_heading(const Matrix3f &dcm_matrix);
-
-	/// Set the compass orientation matrix, used to correct for
-	/// various compass mounting positions.
-	///
-	/// @param  rotation_matrix     Rotation matrix to transform magnetometer readings
-	///                             to the body frame.
-	///
-	virtual void set_orientation(enum Rotation rotation);
 
 	/// Sets the compass offset x/y/z values.
 	///
@@ -119,15 +112,21 @@ public:
 	virtual void set_declination(float radians);
 	float get_declination();
 
+    // set overall board orientation
+    void set_board_orientation(enum Rotation orientation) {
+        _board_orientation = orientation;
+    }
     static const struct AP_Param::GroupInfo var_info[];
 
+    // settable parameters
+    AP_Int8 _learn;                             ///<enable calibration learning
 protected:
-    enum Rotation		_orientation;
+    AP_Int8 _orientation;
 	AP_Vector3f         _offset;
 	AP_Float            _declination;
-    AP_Int8             _learn;                 ///<enable calibration learning
     AP_Int8             _use_for_yaw;           ///<enable use for yaw calculation
     AP_Int8             _auto_declination;      ///<enable automatic declination code
+    AP_Int8 _external;                          ///<compass is external
 
 	bool                _null_init_done;        ///< first-time-around flag used by offset nulling
 
@@ -135,5 +134,7 @@ protected:
     static const uint8_t _mag_history_size = 20;
     uint8_t				_mag_history_index;
 	Vector3i            _mag_history[_mag_history_size];
+    // board orientation from AHRS
+    enum Rotation _board_orientation;
 };
 #endif

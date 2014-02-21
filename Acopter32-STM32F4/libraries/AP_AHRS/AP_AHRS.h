@@ -36,6 +36,7 @@ public:
 
     // empty init
     virtual void init( AP_PeriodicProcess * scheduler = NULL ) {
+        set_orientation();
     };
 
     // Accessors
@@ -44,7 +45,19 @@ public:
     }
     void            set_compass(Compass *compass) {
         _compass = compass;
+		set_orientation();
     }
+
+
+    // allow for runtime change of orientation
+    // this makes initial config easier
+    void set_orientation() {
+        _ins->set_board_orientation((enum Rotation)_board_orientation.get());
+        if (_compass != NULL) {
+            _compass->set_board_orientation((enum Rotation)_board_orientation.get());
+        }
+    }
+	
     void            set_barometer(AP_Baro *barometer) {
         _barometer = barometer;
     }
@@ -151,6 +164,7 @@ public:
     AP_Int8 _gps_use;
     AP_Int8 _baro_use;
     AP_Int8 _wind_max;
+    AP_Int8 _board_orientation;
 
     // for holding parameters
     static const struct AP_Param::GroupInfo var_info[];

@@ -76,7 +76,7 @@ public:
 	virtual bool init(void);
 	virtual bool read(void);
     virtual void accumulate(void);
-	virtual void set_orientation(enum Rotation rotation);
+
 	//made public for debug:
 	virtual bool read_raw(void);
 	

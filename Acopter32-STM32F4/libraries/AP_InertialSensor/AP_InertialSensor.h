@@ -140,6 +140,10 @@ public:
     // class level parameters
     static const struct AP_Param::GroupInfo var_info[];
 
+    // set overall board orientation
+    void set_board_orientation(enum Rotation orientation) {
+        _board_orientation = orientation;
+    }
 protected:
 
     FastSerial * _serial; /// serial for user interaction
@@ -183,6 +187,8 @@ protected:
 
     // filtering frequency (0 means default)
     AP_Int16                 _mpu6000_filter;
+    // board orientation from AHRS
+    enum Rotation			_board_orientation;
 };
 
 #include "AP_InertialSensor_VRIMU.h"
