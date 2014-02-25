@@ -416,6 +416,39 @@ static void do_circle()
     circle_desired_rotations = command_nav_queue.p1;
 }
 
+// do_circle - initiate moving in a circle
+static void do_circle_pan()
+{
+    // set roll-pitch mode (no pilot input)
+    set_roll_pitch_mode(AUTO_RP);
+
+    // set throttle mode to AUTO which, if not already active, will default to hold at our current altitude
+    set_throttle_mode(AUTO_THR);
+
+    // set nav mode to CIRCLE
+    set_nav_mode(NAV_CIRCLE);
+
+    // set target altitude if provided
+    if( command_nav_queue.alt != 0 ) {
+        wp_nav.set_desired_alt(command_nav_queue.alt);
+    }
+
+    // override default horizontal location target
+    if( command_nav_queue.lat != 0 || command_nav_queue.lng != 0) {
+        circle_set_center(pv_location_to_vector(command_nav_queue), ahrs.yaw);
+    }
+
+    // set yaw to point to center of circle
+    set_yaw_mode(CIRCLE_YAW);
+
+    // set angle travelled so far to zero
+    circle_angle_total = 0;
+
+    // record number of desired rotations from mission command
+    circle_desired_rotations = command_nav_queue.p1;
+}
+
+
 // do_loiter_time - initiate loitering at a point for a given time period
 // note: caller should set yaw_mode
 static void do_loiter_time()
@@ -845,7 +878,7 @@ static void do_guided(const struct Location *cmd)
 	wp_nav.set_loiter_target(pos);
 
     } else {
-	wp_nav.set_origin_and_destination(inertial_nav.get_position(),pos);
+	wp_nav.set_destination(pos);
     }
 /*
     // initialise wp_bearing for reporting purposes

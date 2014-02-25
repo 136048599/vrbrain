@@ -1,6 +1,6 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduCopter V3.2-05-ROI"
+#define THISFIRMWARE "ArduCopter V3.1.2-05-ROI"
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1255,6 +1255,7 @@ static void update_GPS(void)
 {
     static uint32_t last_gps_reading;           // time of last gps message
     static uint8_t ground_start_count = 10;     // counter used to grab at least 10 reads before commiting the Home location
+    bool report_gps_glitch;
 
     g_gps->update();
 
@@ -1270,13 +1271,14 @@ static void update_GPS(void)
         // run glitch protection and update AP_Notify if home has been initialised
         if (ap.home_is_set) {
             gps_glitch.check_position();
-            if (AP_Notify::flags.gps_glitching != gps_glitch.glitching()) {
+            report_gps_glitch = (gps_glitch.glitching() && !ap.usb_connected);
+            if (AP_Notify::flags.gps_glitching != report_gps_glitch) {
                 if (gps_glitch.glitching()) {
                     Log_Write_Error(ERROR_SUBSYSTEM_GPS, ERROR_CODE_GPS_GLITCH);
                 }else{
                     Log_Write_Error(ERROR_SUBSYSTEM_GPS, ERROR_CODE_ERROR_RESOLVED);
                 }
-                AP_Notify::flags.gps_glitching = gps_glitch.glitching();
+                AP_Notify::flags.gps_glitching = report_gps_glitch;
             }
         }
     }
@@ -1550,10 +1552,6 @@ uint8_t get_wp_yaw_mode(bool rtl)
             return YAW_LOOK_AHEAD;
             break;
 
-        case WP_YAW_BEHAVIOR_LOOK_AT_LOCATION:
-            return YAW_LOOK_AT_LOCATION;
-            break;
-
         default:
             return YAW_HOLD;
             break;
@@ -1573,6 +1571,7 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
 
     switch( new_roll_pitch_mode ) {
         case ROLL_PITCH_STABLE:
+            reset_roll_pitch_in_filters(g.rc_1.control_in, g.rc_2.control_in);
             roll_pitch_initialised = true;
             break;
         case ROLL_PITCH_ACRO:
@@ -1581,9 +1580,12 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
             acro_pitch_rate = 0;
             roll_pitch_initialised = true;
             break;
-        case ROLL_PITCH_AUTO:
         case ROLL_PITCH_STABLE_OF:
         case ROLL_PITCH_DRIFT:
+            reset_roll_pitch_in_filters(g.rc_1.control_in, g.rc_2.control_in);
+            roll_pitch_initialised = true;
+            break;
+        case ROLL_PITCH_AUTO:
         case ROLL_PITCH_LOITER:
         case ROLL_PITCH_SPORT:
             roll_pitch_initialised = true;
@@ -1593,6 +1595,7 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
         case ROLL_PITCH_AUTOTUNE:
             // only enter autotune mode from stabilized roll-pitch mode when armed and flying
             if (roll_pitch_mode == ROLL_PITCH_STABLE && motors.armed() && !ap.land_complete) {
+                reset_roll_pitch_in_filters(g.rc_1.control_in, g.rc_2.control_in);
                 // auto_tune_start returns true if it wants the roll-pitch mode changed to autotune
                 roll_pitch_initialised = auto_tune_start();
             }
