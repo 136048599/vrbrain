@@ -181,8 +181,8 @@ void AC_WPNav::init_loiter_target(const Vector3f& position, const Vector3f& velo
     // set last velocity to current velocity
     // To-Do: remove the line below by instead forcing reset_I to be called on the first loiter_update call
 	// ST-JD commented: _vel_last = _inav->get_velocity();
-    //_vel_last = _inav->get_velocity();
-	loiter_reset=true; // ST-JD
+    _vel_last = _inav->get_velocity();
+	//loiter_reset=true; // ST-JD
 }
 
 /// move_loiter_target - move loiter target by velocity provided in front/right directions in cm/s
