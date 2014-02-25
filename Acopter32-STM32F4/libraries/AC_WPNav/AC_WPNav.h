@@ -9,6 +9,7 @@
 #include <AC_PID.h>             // PID library
 #include <APM_PI.h>             // PID library
 #include <AP_InertialNav.h>     // Inertial Navigation library
+#include <LowPassFilter2p.h>
 
 // loiter maximum velocities and accelerations
 #define WPNAV_ACCELERATION              100.0f      // defines the default velocity vs distant curve.  maximum acceleration in cm/s/s that position controller asks for from acceleration controller
@@ -107,6 +108,9 @@ public:
     ///
     /// shared methods
     ///
+    bool		loiter_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
+	bool		wpnav_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
+    bool        init_I;                 // ST-JD : allows rate i_term init in reset_i() function
 
     /// get desired roll, pitch which should be fed into stabilize controllers
     int32_t get_desired_roll() const { return _desired_roll; };
@@ -241,6 +245,8 @@ protected:
     float       _track_accel;           // acceleration along track
     float       _track_speed;           // speed in cm/s along track
     float       _track_leash_length;    // leash length along track
+    LowPassFilter2p _accel_filter_lat;
+    LowPassFilter2p _accel_filter_lon;
 
 public:
     // for logging purposes

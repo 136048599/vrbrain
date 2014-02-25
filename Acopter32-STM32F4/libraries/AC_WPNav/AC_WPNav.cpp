@@ -64,6 +64,8 @@ const AP_Param::GroupInfo AC_WPNav::var_info[] PROGMEM = {
     AP_GROUPEND
 };
 
+
+
 // Default constructor.
 // Note that the Vector/Matrix constructors already implicitly zero
 // their values.
@@ -96,6 +98,8 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
     _track_accel(0),
     _track_speed(0),
     _track_leash_length(0),
+    _accel_filter_lat(30, 1),
+    _accel_filter_lon(30, 1),
     dist_error(0,0),
     desired_vel(0,0),
     desired_accel(0,0)
@@ -105,7 +109,10 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
     // calculate loiter leash
     calculate_wp_leash_length(true);
     calculate_loiter_leash_length();
-}
+	loiter_reset=true;      // ST-JD
+	wpnav_reset = true;
+	init_I=true;		    // ST-JD reset_I allowed
+	}
 
 ///
 /// simple loiter controller
@@ -173,7 +180,9 @@ void AC_WPNav::init_loiter_target(const Vector3f& position, const Vector3f& velo
 
     // set last velocity to current velocity
     // To-Do: remove the line below by instead forcing reset_I to be called on the first loiter_update call
-    _vel_last = _inav->get_velocity();
+	// ST-JD commented: _vel_last = _inav->get_velocity();
+    //_vel_last = _inav->get_velocity();
+	loiter_reset=true; // ST-JD
 }
 
 /// move_loiter_target - move loiter target by velocity provided in front/right directions in cm/s
@@ -263,8 +272,9 @@ void AC_WPNav::update_loiter()
     float dt = (now - _loiter_last_update) / 1000.0f;
 
     // catch if we've just been started
-    if( dt >= 1.0f ) {
+    if ((dt>=1.0)||loiter_reset) {      // ST-JD : add "or loiter_reset"
         dt = 0.0f;
+        loiter_reset=false;             // ST-JD
         reset_I();
         _loiter_step = 0;
     }
@@ -355,6 +365,7 @@ void AC_WPNav::set_destination(const Vector3f& destination)
 
     // set origin and destination
     set_origin_and_destination(_origin, destination);
+    wpnav_reset = true;
 }
 
 /// set_origin_and_destination - set origin and destination using lat/lon coordinates
@@ -521,8 +532,9 @@ void AC_WPNav::update_wpnav()
     float dt = (now - _wpnav_last_update) / 1000.0f;
 
     // catch if we've just been started
-    if( dt >= 1.0f ) {
+    if( (dt >= 1.0f) || wpnav_reset ) {
         dt = 0.0;
+        wpnav_reset = false;
         reset_I();
         _wpnav_step = 0;
     }
@@ -580,7 +592,7 @@ void AC_WPNav::get_loiter_position_to_velocity(float dt, float max_speed_cms)
     float linear_distance;      // the distace we swap between linear and sqrt.
     float kP = _pid_pos_lat->kP();
 
-    // avoid divide by zero
+    // avoid divide by zeroq
     if (kP <= 0.0f) {
         desired_vel.x = 0.0;
         desired_vel.y = 0.0;
@@ -661,12 +673,16 @@ void AC_WPNav::get_loiter_acceleration_to_lean_angles(float accel_lat, float acc
     float z_accel_meas = -GRAVITY_MSS * 100;    // gravity in cm/s/s
     float accel_forward;
     float accel_right;
+    float filtered_lat, filtered_lon;
 
     // To-Do: add 1hz filter to accel_lat, accel_lon
+    filtered_lat = _accel_filter_lat.apply(accel_lat);
+    filtered_lon = _accel_filter_lon.apply(accel_lon);
+
 
     // rotate accelerations into body forward-right frame
-    accel_forward = accel_lat*_cos_yaw + accel_lon*_sin_yaw;
-    accel_right = -accel_lat*_sin_yaw + accel_lon*_cos_yaw;
+    accel_forward = filtered_lat*_cos_yaw + filtered_lon*_sin_yaw;
+    accel_right = -filtered_lat*_sin_yaw + filtered_lon*_cos_yaw;
 
     // update angle targets that will be passed to stabilize controller
     _desired_roll = constrain_float(fast_atan(accel_right*_cos_pitch/(-z_accel_meas))*(18000/M_PI_F), -_lean_angle_max_cd, _lean_angle_max_cd);
