@@ -1735,16 +1735,17 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             if(tell_command.id == MAV_CMD_DO_SET_ROI){
         	//set the ROI for the guided mode
         	do_roi(&tell_command);
-        	Log_Write_Roi(&tell_command);
-
+            } else if(tell_command.id == MAV_CMD_NAV_LOITER_TURNS){
+        	//initiate a special circle with moving center
+        	do_circle_pan(&tell_command);
             } else {
 		// initiate guided mode
 		do_guided(&tell_command);
-
-
             }
 
-	    // verify we recevied the command
+            Log_Write_Roi(&tell_command);
+
+            // verify we recevied the command
 	    mavlink_msg_mission_ack_send(
 		chan,
 		msg->sysid,

@@ -417,7 +417,7 @@ static void do_circle()
 }
 
 // do_circle - initiate moving in a circle
-static void do_circle_pan()
+static void do_circle_pan(struct Location *center)
 {
     // set roll-pitch mode (no pilot input)
     set_roll_pitch_mode(AUTO_RP);
@@ -429,13 +429,13 @@ static void do_circle_pan()
     set_nav_mode(NAV_CIRCLE);
 
     // set target altitude if provided
-    if( command_nav_queue.alt != 0 ) {
-        wp_nav.set_desired_alt(command_nav_queue.alt);
+    if( center->alt != 0 ) {
+        wp_nav.set_desired_alt(center->alt);
     }
 
     // override default horizontal location target
-    if( command_nav_queue.lat != 0 || command_nav_queue.lng != 0) {
-        circle_set_center(pv_location_to_vector(command_nav_queue), ahrs.yaw);
+    if( center->lat != 0 || center->lng != 0) {
+        circle_set_center(pv_location_to_vector(*center), ahrs.yaw);
     }
 
     // set yaw to point to center of circle
@@ -445,7 +445,7 @@ static void do_circle_pan()
     circle_angle_total = 0;
 
     // record number of desired rotations from mission command
-    circle_desired_rotations = command_nav_queue.p1;
+    //circle_desired_rotations = command_nav_queue.p1;
 }
 
 
