@@ -109,9 +109,9 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
     // initialise leash lengths
     calculate_wp_leash_length(true);
     calculate_loiter_leash_length();
-	wpnav_reset = true;
-	init_I=true;		    // ST-JD reset_I allowed
-	}
+	//_wpnav_reset = true;
+	//init_I=true;		    // ST-JD reset_I allowed
+}
 
 ///
 /// simple loiter controller

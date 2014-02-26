@@ -863,7 +863,6 @@ static void do_guided(const struct Location *cmd)
     // switch to guided mode if we're not already in guided mode
     if (control_mode != GUIDED) {
         if (set_mode(GUIDED)) {
-            first_time = true;
         }else{
             // if we failed to enter guided mode return immediately
             return;
