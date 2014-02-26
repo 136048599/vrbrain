@@ -67,7 +67,7 @@ static void detect_compass(void){
 
     AP_Compass_HMC5843_EXT compass_ext;
 
-    hal.scheduler->delay(1000);
+    hal.scheduler->delay(10);
 
     g_ext_mag_detect = 0;
 
