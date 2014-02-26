@@ -859,8 +859,7 @@ static bool verify_yaw()
 // this is not actually a mission command but rather a 
 static void do_guided(const struct Location *cmd)
 {
-    static uint8_t old_mode;
-    bool first_time = false;
+
     // switch to guided mode if we're not already in guided mode
     if (control_mode != GUIDED) {
         if (set_mode(GUIDED)) {
@@ -873,13 +872,8 @@ static void do_guided(const struct Location *cmd)
 
     // set wp_nav's destination
     Vector3f pos = pv_location_to_vector(*cmd);
+    wp_nav.set_destination(pos);
 
-    if (ROI_loiter == 1) {
-	wp_nav.set_loiter_target(pos);
-
-    } else {
-	wp_nav.set_destination(pos);
-    }
 /*
     // initialise wp_bearing for reporting purposes
     wp_bearing = wp_nav.get_bearing_to_destination();

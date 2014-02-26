@@ -109,7 +109,6 @@ static void init_aux_switches()
         case AUX_SWITCH_ACRO_TRAINER:
         case AUX_SWITCH_EPM:
         case AUX_SWITCH_SPRAYER:
-        case AUX_SWITCH_ROI:
             do_aux_switch_function(g.ch7_option, ap.CH7_flag);
             break;
     }
@@ -123,7 +122,6 @@ static void init_aux_switches()
         case AUX_SWITCH_ACRO_TRAINER:
         case AUX_SWITCH_EPM:
         case AUX_SWITCH_SPRAYER:
-        case AUX_SWITCH_ROI:
             do_aux_switch_function(g.ch8_option, ap.CH8_flag);
             break;
     }
@@ -369,18 +367,6 @@ static void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 }
             }
             break;
-        case AUX_SWITCH_ROI:
-            if (ch_flag == AUX_SWITCH_HIGH) {
-        	if (control_mode == GUIDED)
-        	set_nav_mode(LOITER_NAV);
-
-                ROI_loiter = 1;
-            }else{
-        	if(control_mode == GUIDED)
-        	set_nav_mode(GUIDED_NAV);
-
-        	ROI_loiter = 0;
-            }
     }
 }
 

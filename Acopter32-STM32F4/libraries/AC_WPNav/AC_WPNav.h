@@ -67,6 +67,11 @@ public:
 
     /// update_loiter - run the loiter controller - should be called at 10hz
     void update_loiter();
+    
+    /// update_spline_velocity - run the loiter controller for
+    /// SplineNav - should be called at 100hz
+    /// return speed that loiter controller needs to keep up with target (adjusted for altitude error)
+    void update_spline_velocity(const Vector3f &target, float dt);
 
     /// get_stopping_point - returns vector to stopping point based on a horizontal position and velocity
     void get_stopping_point(const Vector3f& position, const Vector3f& velocity, Vector3f &target) const;
@@ -109,7 +114,7 @@ public:
     /// shared methods
     ///
     bool		loiter_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
-	bool		wpnav_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
+    uint8_t		_wpnav_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
     bool        init_I;                 // ST-JD : allows rate i_term init in reset_i() function
 
     /// get desired roll, pitch which should be fed into stabilize controllers

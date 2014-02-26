@@ -82,24 +82,7 @@ void VRBRAINUARTDriver::begin(uint32_t baud) {
     _initialized = true;
 }
 
-void VRBRAINUARTDriver::begin(uint32_t baud, uint16_t rxS, uint16_t txS ) {
-    begin(baud);
-}
-
-void VRBRAINUARTDriver::begin(uint32_t baud, uint16_t rxS, uint16_t txS, uint8_t port ) {
-
-    switch (port) {
-    case 1:
-	_usart_device = _USART1;
-	break;
-    case 2:
-	_usart_device = _USART2;
-	break;
-    case 3:
-	_usart_device = _USART3;
-	break;
-    }
-
+void VRBRAINUARTDriver::begin(uint32_t baud, uint16_t rxS, uint16_t txS) {
     begin(baud);
 }
 

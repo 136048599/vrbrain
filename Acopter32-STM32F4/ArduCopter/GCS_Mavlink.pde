@@ -1135,7 +1135,6 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         break;
     }
 
-
     case MAVLINK_MSG_ID_COMMAND_LONG:
     {
         // decode
@@ -1193,6 +1192,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                     ahrs.set_trim(Vector3f(trim_roll, trim_pitch, 0));
                 }
             }
+            result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_COMPONENT_ARM_DISARM:

@@ -310,9 +310,7 @@
 #ifndef SERIAL2_BAUD
  # define SERIAL2_BAUD                    57600
 #endif
-#ifndef GPS_EXT
- # define GPS_EXT 			  0
-#endif
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Battery monitoring

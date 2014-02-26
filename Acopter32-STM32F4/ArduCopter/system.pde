@@ -97,6 +97,11 @@ static void init_ardupilot()
 
     // GPS serial port.
     //
+#if GPS_PROTOCOL != GPS_PROTOCOL_IMU
+    // standard gps running. Note that we need a 256 byte buffer for some
+    // GPS types (eg. UBLOX)
+    hal.uartB->begin(38400, 256, 16);
+#endif
 
     cliSerial->printf_P(PSTR("\n\nInit " FIRMWARE_STRING
                          "\n\nFree RAM: %u\n"),
@@ -119,16 +124,6 @@ static void init_ardupilot()
     load_parameters();
 
     BoardConfig.init();
-
-#if GPS_PROTOCOL != GPS_PROTOCOL_IMU
-    if(g.gps_ext > 0) {
-	hal.uartB->begin(38400, 256, 16, 3);
-    } else {
-	// standard gps running. Note that we need a 256 byte buffer for some
-	// GPS types (eg. UBLOX)
-	hal.uartB->begin(38400, 256, 16, 2);
-    }
-#endif
 
     // FIX: this needs to be the inverse motors mask
     ServoRelayEvents.set_channel_mask(0xFFF0);
@@ -188,14 +183,8 @@ static void init_ardupilot()
     // we have a 2nd serial port for telemetry on all boards except
     // APM2. We actually do have one on APM2 but it isn't necessary as
     // a MUX is used
-
-    //If we have an external GPS switch ports between GPS and telemetry
-    if(g.gps_ext > 0) {
-	hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD), 128, 128, 2);
-    } else {
-	hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD), 128, 128, 3);
-    }
-	gcs[1].init(hal.uartC);
+    hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD), 128, 128);
+    gcs[1].init(hal.uartC);
 #endif
 #if MAVLINK_COMM_NUM_BUFFERS > 2
     if (hal.uartD != NULL) {

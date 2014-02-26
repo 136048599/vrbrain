@@ -106,10 +106,9 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
 {
     AP_Param::setup_object_defaults(this, var_info);
 
-    // calculate loiter leash
+    // initialise leash lengths
     calculate_wp_leash_length(true);
     calculate_loiter_leash_length();
-	loiter_reset=true;      // ST-JD
 	wpnav_reset = true;
 	init_I=true;		    // ST-JD reset_I allowed
 	}
@@ -272,9 +271,8 @@ void AC_WPNav::update_loiter()
     float dt = (now - _loiter_last_update) / 1000.0f;
 
     // catch if we've just been started
-    if ((dt>=1.0)||loiter_reset) {      // ST-JD : add "or loiter_reset"
+    if( dt >= 1.0f ) {
         dt = 0.0f;
-        loiter_reset=false;             // ST-JD
         reset_I();
         _loiter_step = 0;
     }
@@ -365,7 +363,7 @@ void AC_WPNav::set_destination(const Vector3f& destination)
 
     // set origin and destination
     set_origin_and_destination(_origin, destination);
-    wpnav_reset = true;
+    _wpnav_reset = 1;
 }
 
 /// set_origin_and_destination - set origin and destination using lat/lon coordinates
@@ -532,9 +530,8 @@ void AC_WPNav::update_wpnav()
     float dt = (now - _wpnav_last_update) / 1000.0f;
 
     // catch if we've just been started
-    if( (dt >= 1.0f) || wpnav_reset ) {
+    if( (dt >= 1.0f)) {
         dt = 0.0;
-        wpnav_reset = false;
         reset_I();
         _wpnav_step = 0;
     }
@@ -542,6 +539,10 @@ void AC_WPNav::update_wpnav()
     // reset step back to 0 if 0.1 seconds has passed and we completed the last full cycle
     if (dt > 0.095f && _wpnav_step > 3) {
         _wpnav_step = 0;
+    }
+
+    if (_wpnav_reset > 0) {
+	_wpnav_step = 0;
     }
 
     // run loiter steps
@@ -627,7 +628,49 @@ void AC_WPNav::get_loiter_position_to_velocity(float dt, float max_speed_cms)
         desired_vel.y += _target_vel.y;
     }
 }
+/// SplineNav - should be called at 100hz
+/// return speed that loiter controller needs to keep up with target (adjusted for altitude error)
+void AC_WPNav::update_spline_velocity(const Vector3f &target, float dt)
+{
+    // catch if we've just been started
+    if( dt == 0.0f ) {
+        reset_I();
+    }
 
+    // set target location
+    _target = target;
+
+    // get current location
+    Vector3f curr = _inav->get_position();
+
+    // calculate distance and alt error
+    dist_error.x = _target.x - curr.x;
+    dist_error.y = _target.y - curr.y;
+    float alt_error = _target.z - curr.z;
+    if (alt_error < 0.0) alt_error = 0.0; // worried about low altitude only
+
+    // compute desired velocity based on dist error
+    desired_vel.x = _pid_pos_lat->get_p(dist_error.x);
+    desired_vel.y = _pid_pos_lon->get_p(dist_error.y);
+
+    // use this formula so SplineNav can slow down if needed
+    // (pretending here that the alt error is actually some additional dist_error)
+    float chase_speed = desired_vel.length() + _pid_pos_lat->get_p(alt_error);
+
+    // ensure velocity stays within limits
+    float vel_total_sq = desired_vel.x*desired_vel.x + desired_vel.y*desired_vel.y;
+    if( vel_total_sq > _loiter_speed_cms * _loiter_speed_cms) {
+        float vel_total = sqrt(vel_total_sq);
+        desired_vel.x = _loiter_speed_cms * desired_vel.x/vel_total;
+        desired_vel.y = _loiter_speed_cms * desired_vel.y/vel_total;
+    }
+
+    // feed forward velocity request -- skip for now
+    desired_vel.x += _target_vel.x;
+    desired_vel.y += _target_vel.y;
+
+    //return chase_speed;
+}
 /// get_loiter_velocity_to_acceleration - loiter velocity controller
 ///    converts desired velocities in lat/lon directions to accelerations in lat/lon frame
 void AC_WPNav::get_loiter_velocity_to_acceleration(float vel_lat, float vel_lon, float dt)
@@ -640,6 +683,9 @@ void AC_WPNav::get_loiter_velocity_to_acceleration(float vel_lat, float vel_lon,
     if( dt == 0.0f ) {
         desired_accel.x = 0;
         desired_accel.y = 0;
+    } else if(_wpnav_reset > 0) {
+	//noop
+	_wpnav_reset = 0;
     } else {
         // feed forward desired acceleration calculation
         desired_accel.x = (vel_lat - _vel_last.x)/dt;

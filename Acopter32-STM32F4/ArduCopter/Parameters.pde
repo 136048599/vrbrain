@@ -67,13 +67,6 @@ const AP_Param::Info var_info[] PROGMEM = {
     GSCALAR(serial2_baud,   "SERIAL2_BAUD",     SERIAL2_BAUD/1000),
 #endif
 
-    // @Param: GPS_EXT
-    // @DisplayName: External GPS
-    // @Description: Do we have an external GPS attached to serial 3?
-    // @Values: 0:false,1:true
-    // @User: Standard
-    GSCALAR(gps_ext,   "GPS_EXT",     GPS_EXT),
-
     // @Param: TELEM_DELAY
     // @DisplayName: Telemetry startup delay
     // @Description: The amount of time (in seconds) to delay radio telemetry to prevent an Xbee bricking on power up
