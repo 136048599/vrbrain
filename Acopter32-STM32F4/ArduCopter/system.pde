@@ -430,7 +430,11 @@ static bool set_mode(uint8_t mode)
         case LOITER:
             if (GPS_ok() || ignore_checks) {
                 success = true;
-                set_yaw_mode(LOITER_YAW);
+                if(roi_mode == 0) {
+                    set_yaw_mode(LOITER_YAW);
+                } else {
+                    set_yaw_mode(YAW_LOOK_AT_LOCATION);
+                }
                 set_roll_pitch_mode(LOITER_RP);
                 set_throttle_mode(LOITER_THR);
                 set_nav_mode(LOITER_NAV);
@@ -450,7 +454,7 @@ static bool set_mode(uint8_t mode)
         case GUIDED:
             if (GPS_ok() || ignore_checks) {
                 success = true;
-                set_yaw_mode(get_wp_yaw_mode(false));
+                set_yaw_mode(YAW_LOOK_AT_LOCATION);
                 set_roll_pitch_mode(GUIDED_RP);
                 set_throttle_mode(GUIDED_THR);
                 set_nav_mode(GUIDED_NAV);

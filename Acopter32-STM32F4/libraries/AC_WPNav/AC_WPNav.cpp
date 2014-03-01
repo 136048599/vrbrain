@@ -98,11 +98,10 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
     _track_accel(0),
     _track_speed(0),
     _track_leash_length(0),
-    _accel_filter_lat(30, 1),
-    _accel_filter_lon(30, 1),
     dist_error(0,0),
     desired_vel(0,0),
-    desired_accel(0,0)
+    desired_accel(0,0),
+    _forward_speed(0)
 {
     AP_Param::setup_object_defaults(this, var_info);
 
@@ -111,6 +110,8 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
     calculate_loiter_leash_length();
 	//_wpnav_reset = true;
 	//init_I=true;		    // ST-JD reset_I allowed
+    _accel_filter_lat.set_cutoff_frequency(0.3f, 0.5f);
+    _accel_filter_lon.set_cutoff_frequency(0.3f, 0.5f);
 }
 
 ///
@@ -282,6 +283,12 @@ void AC_WPNav::update_loiter()
         _loiter_step = 0;
     }
 
+    if (_loiter_reset > 0) {
+	_loiter_step = 0;
+	_loiter_reset = 0;
+	_accel_reset = 1;
+    }
+
     // run loiter steps
     switch (_loiter_step) {
         case 0:
@@ -363,7 +370,7 @@ void AC_WPNav::set_destination(const Vector3f& destination)
 
     // set origin and destination
     set_origin_and_destination(_origin, destination);
-    _wpnav_reset = 1;
+
 }
 
 /// set_origin_and_destination - set origin and destination using lat/lon coordinates
@@ -377,7 +384,7 @@ void AC_WPNav::set_origin_and_destination(const Vector3f& origin, const Vector3f
     // calculate leash lengths
     bool climb = pos_delta.z >= 0;  // climbing vs descending leads to different leash lengths because speed_up_cms and speed_down_cms can be different
 
-    _track_length = pos_delta.length(); // get track length
+    _track_length = pos_delta.length() + _forward_speed; // get track length
 
     // calculate each axis' percentage of the total distance to the destination
     if (_track_length == 0.0f) {
@@ -394,12 +401,16 @@ void AC_WPNav::set_origin_and_destination(const Vector3f& origin, const Vector3f
     _track_desired = 0;
     _target = origin;
     _flags.reached_destination = false;
+    _wpnav_reset = 1; //reset wpnav update
 
     // initialise the limited speed to current speed along the track
     const Vector3f &curr_vel = _inav->get_velocity();
     // get speed along track (note: we convert vertical speed into horizontal speed equivalent)
     float speed_along_track = curr_vel.x * _pos_delta_unit.x + curr_vel.y * _pos_delta_unit.y + curr_vel.z * _pos_delta_unit.z;
     _limited_speed_xy_cms = constrain_float(speed_along_track,0,_wp_speed_cms);
+
+    _vel_last.x = curr_vel.x;
+    _vel_last.y = curr_vel.y;
 
     // default waypoint back to slow
     _flags.fast_waypoint = false;
@@ -543,6 +554,8 @@ void AC_WPNav::update_wpnav()
 
     if (_wpnav_reset > 0) {
 	_wpnav_step = 0;
+	_wpnav_reset = 0;
+	_accel_reset = 1;
     }
 
     // run loiter steps
@@ -561,6 +574,7 @@ void AC_WPNav::update_wpnav()
         case 1:
             // run loiter's position to velocity step
             get_loiter_position_to_velocity(_wpnav_dt, _wp_speed_cms);
+            //update_spline_velocity(dt);
             _wpnav_step++;
             break;
         case 2:
@@ -630,15 +644,16 @@ void AC_WPNav::get_loiter_position_to_velocity(float dt, float max_speed_cms)
 }
 /// SplineNav - should be called at 100hz
 /// return speed that loiter controller needs to keep up with target (adjusted for altitude error)
-void AC_WPNav::update_spline_velocity(const Vector3f &target, float dt)
+void AC_WPNav::update_spline_velocity(float dt)
 {
+    float dist_error_total;
     // catch if we've just been started
     if( dt == 0.0f ) {
         reset_I();
     }
 
     // set target location
-    _target = target;
+    //_target = target;
 
     // get current location
     Vector3f curr = _inav->get_position();
@@ -655,7 +670,10 @@ void AC_WPNav::update_spline_velocity(const Vector3f &target, float dt)
 
     // use this formula so SplineNav can slow down if needed
     // (pretending here that the alt error is actually some additional dist_error)
-    float chase_speed = desired_vel.length() + _pid_pos_lat->get_p(alt_error);
+    //float chase_speed = desired_vel.length() + _pid_pos_lat->get_p(alt_error);
+
+    dist_error_total = safe_sqrt(dist_error.x*dist_error.x + dist_error.y*dist_error.y);
+    _distance_to_target = dist_error_total;      // for reporting purposes
 
     // ensure velocity stays within limits
     float vel_total_sq = desired_vel.x*desired_vel.x + desired_vel.y*desired_vel.y;
@@ -683,9 +701,10 @@ void AC_WPNav::get_loiter_velocity_to_acceleration(float vel_lat, float vel_lon,
     if( dt == 0.0f ) {
         desired_accel.x = 0;
         desired_accel.y = 0;
-    } else if(_wpnav_reset > 0) {
-	//noop
-	_wpnav_reset = 0;
+
+    } else if(_accel_reset > 0) {
+	_accel_reset = 0;
+	//noop keep last desidered accel to overcome glitches;
     } else {
         // feed forward desired acceleration calculation
         desired_accel.x = (vel_lat - _vel_last.x)/dt;
@@ -719,16 +738,15 @@ void AC_WPNav::get_loiter_acceleration_to_lean_angles(float accel_lat, float acc
     float z_accel_meas = -GRAVITY_MSS * 100;    // gravity in cm/s/s
     float accel_forward;
     float accel_right;
-    float filtered_lat, filtered_lon;
 
     // To-Do: add 1hz filter to accel_lat, accel_lon
-    filtered_lat = _accel_filter_lat.apply(accel_lat);
-    filtered_lon = _accel_filter_lon.apply(accel_lon);
 
+    filtered_accel_x = _accel_filter_lat.apply(accel_lat);
+    filtered_accel_y = _accel_filter_lon.apply(accel_lon);
 
     // rotate accelerations into body forward-right frame
-    accel_forward = filtered_lat*_cos_yaw + filtered_lon*_sin_yaw;
-    accel_right = -filtered_lat*_sin_yaw + filtered_lon*_cos_yaw;
+    accel_forward = filtered_accel_x*_cos_yaw + filtered_accel_y*_sin_yaw;
+    accel_right = -filtered_accel_x*_sin_yaw + filtered_accel_y*_cos_yaw;
 
     // update angle targets that will be passed to stabilize controller
     _desired_roll = constrain_float(fast_atan(accel_right*_cos_pitch/(-z_accel_meas))*(18000/M_PI_F), -_lean_angle_max_cd, _lean_angle_max_cd);

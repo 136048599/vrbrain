@@ -9,7 +9,7 @@
 #include <AC_PID.h>             // PID library
 #include <APM_PI.h>             // PID library
 #include <AP_InertialNav.h>     // Inertial Navigation library
-#include <LowPassFilter2p.h>
+#include <LowPassFilter.h>
 
 // loiter maximum velocities and accelerations
 #define WPNAV_ACCELERATION              100.0f      // defines the default velocity vs distant curve.  maximum acceleration in cm/s/s that position controller asks for from acceleration controller
@@ -71,7 +71,7 @@ public:
     /// update_spline_velocity - run the loiter controller for
     /// SplineNav - should be called at 100hz
     /// return speed that loiter controller needs to keep up with target (adjusted for altitude error)
-    void update_spline_velocity(const Vector3f &target, float dt);
+    void update_spline_velocity(float dt);
 
     /// get_stopping_point - returns vector to stopping point based on a horizontal position and velocity
     void get_stopping_point(const Vector3f& position, const Vector3f& velocity, Vector3f &target) const;
@@ -110,11 +110,14 @@ public:
     /// update_wp - update waypoint controller
     void update_wpnav();
 
+    void set_target_spped(int16_t cms) { _forward_speed = cms; };
+
     ///
     /// shared methods
     ///
-    bool		loiter_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
+    bool		_loiter_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
     uint8_t		_wpnav_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
+    uint8_t 		_accel_reset;
     bool        init_I;                 // ST-JD : allows rate i_term init in reset_i() function
 
     /// get desired roll, pitch which should be fed into stabilize controllers
@@ -250,14 +253,17 @@ protected:
     float       _track_accel;           // acceleration along track
     float       _track_speed;           // speed in cm/s along track
     float       _track_leash_length;    // leash length along track
-    LowPassFilter2p _accel_filter_lat;
-    LowPassFilter2p _accel_filter_lon;
+    LowPassFilterFloat _accel_filter_lat;
+    LowPassFilterFloat _accel_filter_lon;
 
 public:
     // for logging purposes
     Vector2f dist_error;                // distance error calculated by loiter controller
     Vector2f desired_vel;               // loiter controller desired velocity
     Vector2f desired_accel;             // the resulting desired acceleration
+    float filtered_accel_x;
+    float filtered_accel_y;
+    uint16_t _forward_speed;
 
     // To-Do: add split of fast (100hz for accel->angle) and slow (10hz for navigation)
     /// update - run the loiter and wpnav controllers - should be called at 100hz

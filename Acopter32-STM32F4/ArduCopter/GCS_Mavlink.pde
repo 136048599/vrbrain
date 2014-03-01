@@ -1657,7 +1657,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         switch (tell_command.id) {                                                      // Switch to map APM command fields into MAVLink command fields
         case MAV_CMD_NAV_LOITER_TURNS:
         case MAV_CMD_DO_SET_HOME:
-            tell_command.p1 = packet.param1;
+            tell_command.p1 = packet.param3;
             break;
 
         case MAV_CMD_NAV_ROI:
@@ -1735,9 +1735,15 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             if(tell_command.id == MAV_CMD_DO_SET_ROI){
         	//set the ROI for the guided mode
         	do_roi(&tell_command);
+
+            } else if(tell_command.id == MAV_CMD_DO_CHANGE_SPEED){
+        	//pass the target speed
+        	//wp_nav.set_horizontal_velocity(tell_command.lat * 100);
+
             } else if(tell_command.id == MAV_CMD_NAV_LOITER_TURNS){
         	//initiate a special circle with moving center
         	do_circle_pan(&tell_command);
+
             } else {
 		// initiate guided mode
 		do_guided(&tell_command);

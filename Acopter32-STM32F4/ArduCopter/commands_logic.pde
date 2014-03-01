@@ -419,6 +419,7 @@ static void do_circle()
 // do_circle - initiate moving in a circle
 static void do_circle_pan(struct Location *center)
 {
+
     // set roll-pitch mode (no pilot input)
     set_roll_pitch_mode(AUTO_RP);
 
@@ -430,12 +431,18 @@ static void do_circle_pan(struct Location *center)
 
     // set target altitude if provided
     if( center->alt != 0 ) {
-        wp_nav.set_desired_alt(center->alt);
+        //wp_nav.set_desired_alt(center->alt);
     }
+    uint16_t radius = (center->p1 * 100);
+    if(radius <= 0) {
+	radius = pv_get_horizontal_distance_cm(inertial_nav.get_position(),pv_location_to_vector(*roi_loc));
+    }
+    g.circle_radius.set(radius);
+
 
     // override default horizontal location target
     if( center->lat != 0 || center->lng != 0) {
-        circle_set_center(pv_location_to_vector(*center), ahrs.yaw);
+        circle_set_center(inertial_nav.get_position(), ahrs.yaw);
     }
 
     // set yaw to point to center of circle
@@ -857,8 +864,10 @@ static bool verify_yaw()
 
 // do_guided - start guided mode
 // this is not actually a mission command but rather a 
-static void do_guided(const struct Location *cmd)
+static void do_guided(struct Location *cmd)
 {
+
+    static struct Location *last_loc;
 
     // switch to guided mode if we're not already in guided mode
     if (control_mode != GUIDED) {
@@ -867,11 +876,21 @@ static void do_guided(const struct Location *cmd)
             // if we failed to enter guided mode return immediately
             return;
         }
+    /*} else {
+       if (set_mode(GUIDED)) {
+        }else{
+            // if we failed to enter guided mode return immediately
+            return;
+        } */
     }
 
+    //if the new location is less than 100cm apart, don't give new location
+    if(pv_get_horizontal_distance_cm(pv_location_to_vector(*last_loc), pv_location_to_vector(*cmd)) > 99) {
     // set wp_nav's destination
     Vector3f pos = pv_location_to_vector(*cmd);
     wp_nav.set_destination(pos);
+    last_loc = cmd;
+    }
 
 /*
     // initialise wp_bearing for reporting purposes
@@ -939,7 +958,7 @@ static void do_set_home()
 //          and possibly rotating the copter to point at the ROI if our mount type does not support a yaw feature
 //          Note: the ROI should already be in the command_nav_queue global variable
 //	TO-DO: add support for other features of MAV_CMD_DO_SET_ROI including pointing at a given waypoint
-static void do_roi(struct Location *roi_loc)
+static void do_roi(struct Location *r_loc)
 {
     // TO-DO: expand handling of the do_nav_roi to support all modes of the MAVLink.  Currently we only handle mode 4 (see below)
     //		0: do nothing
@@ -948,7 +967,8 @@ static void do_roi(struct Location *roi_loc)
     //		3: point at a location given by alt, lon, lat parameters
     //		4: point at a target given a target id (can't be implemented)
 
-    uint8_t roi_mode = roi_loc->p1;
+    roi_mode = r_loc->p1;
+    roi_loc = r_loc;
 
     switch (roi_mode){
     case 0:
@@ -974,6 +994,7 @@ static void do_roi(struct Location *roi_loc)
     yaw_look_at_WP = pv_location_to_vector(*roi_loc);
     set_yaw_mode(YAW_LOOK_AT_LOCATION);
 #endif
+    break;
     }
 }
 

@@ -276,6 +276,8 @@ struct PACKED log_Nav_Tuning {
     float    vel_y;
     float    desired_accel_x;
     float    desired_accel_y;
+    float    filtered_accel_x;
+    float    filtered_accel_y;
 };
 
 // Write an Nav Tuning packet
@@ -297,7 +299,9 @@ static void Log_Write_Nav_Tuning()
         vel_x           : velocity.x,
         vel_y           : velocity.y,
         desired_accel_x : wp_nav.desired_accel.x,
-        desired_accel_y : wp_nav.desired_accel.y
+        desired_accel_y : wp_nav.desired_accel.y,
+        filtered_accel_x : wp_nav.filtered_accel_x,
+        filtered_accel_y : wp_nav.filtered_accel_y
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -710,7 +714,7 @@ static const struct LogStructure log_structure[] PROGMEM = {
     { LOG_OPTFLOW_MSG, sizeof(log_Optflow),       
       "OF",   "hhBccee",   "Dx,Dy,SQual,X,Y,Roll,Pitch" },
     { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),       
-      "NTUN", "Iffffffffff", "TimeMS,DPosX,DPosY,PosX,PosY,DVelX,DVelY,VelX,VelY,DAccX,DAccY" },
+      "NTUN", "Iffffffffffff", "MS,DPoX,DPoY,PoX,PoY,DVeX,DVeY,VeX,VeY,DAcX,DAcY,FAcX,FAcY" },
     { LOG_CONTROL_TUNING_MSG, sizeof(log_Control_Tuning),
       "CTUN", "Ihhhffecchh", "TimeMS,ThrIn,AngBst,ThrOut,DAlt,Alt,BarAlt,DSAlt,SAlt,DCRt,CRt" },
     { LOG_COMPASS_MSG, sizeof(log_Compass),             
