@@ -867,7 +867,12 @@ static bool verify_yaw()
 static void do_guided(struct Location *cmd)
 {
 
-    static struct Location *last_loc;
+    static Vector3f last_loc(0,0,0);
+
+    Vector3f pos = pv_location_to_vector(*cmd);
+
+    //if the new location is less than 100cm apart, don't give new location
+    wp_nav.set_destination(pos);
 
     // switch to guided mode if we're not already in guided mode
     if (control_mode != GUIDED) {
@@ -882,14 +887,6 @@ static void do_guided(struct Location *cmd)
             // if we failed to enter guided mode return immediately
             return;
         } */
-    }
-
-    //if the new location is less than 100cm apart, don't give new location
-    if(pv_get_horizontal_distance_cm(pv_location_to_vector(*last_loc), pv_location_to_vector(*cmd)) > 99) {
-    // set wp_nav's destination
-    Vector3f pos = pv_location_to_vector(*cmd);
-    wp_nav.set_destination(pos);
-    last_loc = cmd;
     }
 
 /*

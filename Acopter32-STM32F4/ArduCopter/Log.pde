@@ -667,10 +667,11 @@ struct PACKED log_Roi {
     int32_t  longitude;
     int32_t  altitude;
     uint8_t  enabled;
+    uint8_t  roi_type;
 };
 
 // Write a Roi packet
-static void Log_Write_Roi(struct Location *roi_loc)
+static void Log_Write_Roi(struct Location *roi_loc, uint8_t type)
 {
     struct log_Roi pkt = {
         LOG_PACKET_HEADER_INIT(LOG_ROI_MSG),
@@ -679,7 +680,8 @@ static void Log_Write_Roi(struct Location *roi_loc)
         latitude    : roi_loc->lat,
         longitude   : roi_loc->lng,
         altitude    : roi_loc->alt,
-        enabled     : roi_loc->p1
+        enabled     : roi_loc->p1,
+        roi_type    : type
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -746,7 +748,7 @@ static const struct LogStructure log_structure[] PROGMEM = {
     { LOG_CAMERA_MSG, sizeof(log_Camera),                 
       "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
     { LOG_ROI_MSG, sizeof(log_Roi),
-      "ROI",   "IHLLeB",   "GPSTime,GPSWeek,Lat,Lng,Alt,Enable" },
+      "ROI",   "IHLLeBB",   "GPSTime,GPSWeek,Lat,Lng,Alt,Enable,Type" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
 };

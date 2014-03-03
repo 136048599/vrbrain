@@ -110,8 +110,8 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
     calculate_loiter_leash_length();
 	//_wpnav_reset = true;
 	//init_I=true;		    // ST-JD reset_I allowed
-    _accel_filter_lat.set_cutoff_frequency(0.3f, 0.5f);
-    _accel_filter_lon.set_cutoff_frequency(0.3f, 0.5f);
+    _accel_filter_lat.set_cutoff_frequency(0.25f, 1.0f);
+    _accel_filter_lon.set_cutoff_frequency(0.25f, 1.0f);
 }
 
 ///
@@ -283,12 +283,6 @@ void AC_WPNav::update_loiter()
         _loiter_step = 0;
     }
 
-    if (_loiter_reset > 0) {
-	_loiter_step = 0;
-	_loiter_reset = 0;
-	_accel_reset = 1;
-    }
-
     // run loiter steps
     switch (_loiter_step) {
         case 0:
@@ -384,7 +378,7 @@ void AC_WPNav::set_origin_and_destination(const Vector3f& origin, const Vector3f
     // calculate leash lengths
     bool climb = pos_delta.z >= 0;  // climbing vs descending leads to different leash lengths because speed_up_cms and speed_down_cms can be different
 
-    _track_length = pos_delta.length() + _forward_speed; // get track length
+    _track_length = pos_delta.length(); // get track length
 
     // calculate each axis' percentage of the total distance to the destination
     if (_track_length == 0.0f) {
@@ -409,8 +403,8 @@ void AC_WPNav::set_origin_and_destination(const Vector3f& origin, const Vector3f
     float speed_along_track = curr_vel.x * _pos_delta_unit.x + curr_vel.y * _pos_delta_unit.y + curr_vel.z * _pos_delta_unit.z;
     _limited_speed_xy_cms = constrain_float(speed_along_track,0,_wp_speed_cms);
 
-    _vel_last.x = curr_vel.x;
-    _vel_last.y = curr_vel.y;
+    //_vel_last.x = curr_vel.x;
+    //_vel_last.y = curr_vel.y;
 
     // default waypoint back to slow
     _flags.fast_waypoint = false;
@@ -541,21 +535,19 @@ void AC_WPNav::update_wpnav()
     float dt = (now - _wpnav_last_update) / 1000.0f;
 
     // catch if we've just been started
-    if( (dt >= 1.0f)) {
+    if( dt >= 1.0f ) {
         dt = 0.0;
         reset_I();
         _wpnav_step = 0;
+    } else if (_wpnav_reset > 0) {
+	_wpnav_step = 0;
+	_wpnav_reset = 0;
+	_accel_reset = 1;
     }
 
     // reset step back to 0 if 0.1 seconds has passed and we completed the last full cycle
     if (dt > 0.095f && _wpnav_step > 3) {
         _wpnav_step = 0;
-    }
-
-    if (_wpnav_reset > 0) {
-	_wpnav_step = 0;
-	_wpnav_reset = 0;
-	_accel_reset = 1;
     }
 
     // run loiter steps

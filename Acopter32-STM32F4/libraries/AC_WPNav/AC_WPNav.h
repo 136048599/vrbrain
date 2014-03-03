@@ -115,9 +115,8 @@ public:
     ///
     /// shared methods
     ///
-    bool		_loiter_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
     uint8_t		_wpnav_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
-    uint8_t 		_accel_reset;
+    uint8_t 	_accel_reset;
     bool        init_I;                 // ST-JD : allows rate i_term init in reset_i() function
 
     /// get desired roll, pitch which should be fed into stabilize controllers

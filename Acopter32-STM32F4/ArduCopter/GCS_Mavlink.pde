@@ -1735,21 +1735,24 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             if(tell_command.id == MAV_CMD_DO_SET_ROI){
         	//set the ROI for the guided mode
         	do_roi(&tell_command);
+        	Log_Write_Roi(&tell_command, 1);
 
             } else if(tell_command.id == MAV_CMD_DO_CHANGE_SPEED){
         	//pass the target speed
         	//wp_nav.set_horizontal_velocity(tell_command.lat * 100);
+        	Log_Write_Roi(&tell_command, 3);
 
             } else if(tell_command.id == MAV_CMD_NAV_LOITER_TURNS){
         	//initiate a special circle with moving center
         	do_circle_pan(&tell_command);
+        	Log_Write_Roi(&tell_command, 4);
 
-            } else {
+            } else if(tell_command.id == MAV_CMD_NAV_WAYPOINT){
 		// initiate guided mode
 		do_guided(&tell_command);
+        	Log_Write_Roi(&tell_command, 2);
             }
 
-            Log_Write_Roi(&tell_command);
 
             // verify we recevied the command
 	    mavlink_msg_mission_ack_send(
