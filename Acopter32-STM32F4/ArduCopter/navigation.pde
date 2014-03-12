@@ -98,7 +98,6 @@ static bool set_nav_mode(uint8_t new_nav_mode)
             break;
 
         case NAV_LOITER:
-            wp_nav.init_I=true;     // JD-ST : we reset the i_terms in reset_I()
             // set target to current position
             wp_nav.init_loiter_target(inertial_nav.get_position(), inertial_nav.get_velocity());
             nav_initialised = true;

@@ -320,7 +320,7 @@ void AC_WPNav::update_loiter()
     float dt = (now - _loiter_last_update) / 1000.0f;
 
     // catch if we've just been started
-    if ((dt>=1.0)||loiter_reset) {      // ST-JD : add "or loiter_reset"
+    if ((dt>=1.0f)||loiter_reset) {      // ST-JD : add "or loiter_reset"
         dt = 0.0f;
         loiter_reset=false;             // ST-JD
         reset_I();

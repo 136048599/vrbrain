@@ -74,16 +74,6 @@ static int16_t read_sonar(void)
 
 static void init_compass()
 {
-/*
-    if (compass_ext.init() && compass_ext.read()){
-	cliSerial->println_P(PSTR("External Compass Detected!"));
-	compass = &compass_ext;
-    } else if(compass_int.init() && compass_int.read())  {
-	compass = &compass_int;
-	cliSerial->println_P(PSTR("Internal Compass Detected!"));
-	//compass = compass_int;
-    }else{
-    */
     if (!compass.init() || !compass.read()) {
         // make sure we don't pass a broken compass to DCM
         cliSerial->println_P(PSTR("COMPASS INIT ERROR"));
