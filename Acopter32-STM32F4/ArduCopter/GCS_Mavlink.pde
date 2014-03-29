@@ -1744,7 +1744,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
             } else if(tell_command.id == MAV_CMD_NAV_LOITER_TURNS){
         	//initiate a special circle with moving center
-        	do_circle_pan(&tell_command);
+        	//do_circle_pan(&tell_command);
         	Log_Write_Roi(&tell_command, 4);
 
             } else if(tell_command.id == MAV_CMD_NAV_WAYPOINT){

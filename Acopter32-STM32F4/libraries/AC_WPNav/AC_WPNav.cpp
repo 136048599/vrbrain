@@ -110,8 +110,8 @@ AC_WPNav::AC_WPNav(const AP_InertialNav* inav, const AP_AHRS* ahrs, APM_PI* pid_
     calculate_loiter_leash_length();
 	//_wpnav_reset = true;
 	//init_I=true;		    // ST-JD reset_I allowed
-    _accel_filter_lat.set_cutoff_frequency(0.25f, 1.0f);
-    _accel_filter_lon.set_cutoff_frequency(0.25f, 1.0f);
+    _accel_filter_lat.set_cutoff_frequency(0.4f, 1.0f);
+    _accel_filter_lon.set_cutoff_frequency(0.4f, 1.0f);
 }
 
 ///
@@ -697,6 +697,9 @@ void AC_WPNav::get_loiter_velocity_to_acceleration(float vel_lat, float vel_lon,
     } else if(_accel_reset > 0) {
 	_accel_reset = 0;
 	//noop keep last desidered accel to overcome glitches;
+	 _vel_last.x = vel_lat;
+	 _vel_last.y = vel_lon;
+	 return;
     } else {
         // feed forward desired acceleration calculation
         desired_accel.x = (vel_lat - _vel_last.x)/dt;
@@ -737,8 +740,11 @@ void AC_WPNav::get_loiter_acceleration_to_lean_angles(float accel_lat, float acc
     filtered_accel_y = _accel_filter_lon.apply(accel_lon);
 
     // rotate accelerations into body forward-right frame
-    accel_forward = filtered_accel_x*_cos_yaw + filtered_accel_y*_sin_yaw;
-    accel_right = -filtered_accel_x*_sin_yaw + filtered_accel_y*_cos_yaw;
+    //accel_forward = filtered_accel_x*_cos_yaw + filtered_accel_y*_sin_yaw;
+    //accel_right = -filtered_accel_x*_sin_yaw + filtered_accel_y*_cos_yaw;
+	
+	accel_forward = accel_lat*_cos_yaw + accel_lon*_sin_yaw;
+    accel_right = -accel_lat*_sin_yaw + accel_lon*_cos_yaw;
 
     // update angle targets that will be passed to stabilize controller
     _desired_roll = constrain_float(fast_atan(accel_right*_cos_pitch/(-z_accel_meas))*(18000/M_PI_F), -_lean_angle_max_cd, _lean_angle_max_cd);

@@ -867,7 +867,7 @@ static bool verify_yaw()
 static void do_guided(struct Location *cmd)
 {
 
-    static Vector3f last_loc(0,0,0);
+    //static Vector3f last_loc(0,0,0);
 
     Vector3f pos = pv_location_to_vector(*cmd);
 
@@ -875,19 +875,21 @@ static void do_guided(struct Location *cmd)
     wp_nav.set_destination(pos);
 
     // switch to guided mode if we're not already in guided mode
+    /*
     if (control_mode != GUIDED) {
         if (set_mode(GUIDED)) {
         }else{
             // if we failed to enter guided mode return immediately
             return;
         }
+        */
     /*} else {
        if (set_mode(GUIDED)) {
         }else{
             // if we failed to enter guided mode return immediately
             return;
         } */
-    }
+    //}
 
 /*
     // initialise wp_bearing for reporting purposes
