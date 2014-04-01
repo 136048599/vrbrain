@@ -5,6 +5,7 @@
 
 // forward declarations to make compiler happy
 static bool do_guided(const AP_Mission::Mission_Command& cmd);
+static void do_roi(const AP_Mission::Mission_Command& cmd);
 
 // use this to prevent recursion during sensor init
 static bool in_mavlink_delay;
@@ -1035,6 +1036,11 @@ GCS_MAVLINK::data_stream_send(void)
 void GCS_MAVLINK::handle_guided_request(AP_Mission::Mission_Command &cmd)
 {
     do_guided(cmd);
+}
+
+void GCS_MAVLINK::handle_roi_request(AP_Mission::Mission_Command &cmd)
+{
+    do_roi(cmd);
 }
 
 void GCS_MAVLINK::handle_change_alt_request(AP_Mission::Mission_Command &cmd)

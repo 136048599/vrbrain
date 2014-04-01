@@ -14,7 +14,7 @@ static void do_change_alt(const AP_Mission::Mission_Command& cmd);
 static void do_yaw(const AP_Mission::Mission_Command& cmd);
 static void do_change_speed(const AP_Mission::Mission_Command& cmd);
 static void do_set_home(const AP_Mission::Mission_Command& cmd);
-static void do_roi(const AP_Mission::Mission_Command& cmd);
+//static void do_roi(const AP_Mission::Mission_Command& cmd);
 static bool verify_nav_wp(const AP_Mission::Mission_Command& cmd);
 static bool verify_spline_wp(const AP_Mission::Mission_Command& cmd);
 static void auto_spline_start(const Vector3f& destination, bool stopped_at_start, AC_WPNav::spline_segment_end_type seg_end_type, const Vector3f& next_spline_destination);
