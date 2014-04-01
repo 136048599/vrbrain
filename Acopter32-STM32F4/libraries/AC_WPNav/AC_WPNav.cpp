@@ -292,6 +292,7 @@ void AC_WPNav::set_wp_origin_and_destination(const Vector3f& origin, const Vecto
     _pos_control.set_speed_z(-_wp_speed_down_cms, _wp_speed_up_cms);
     _pos_control.calc_leash_length_xy();
     _pos_control.calc_leash_length_z();
+    _pos_control.reset_accel();
 
     // calculate leash lengths
     calculate_wp_leash_length();
