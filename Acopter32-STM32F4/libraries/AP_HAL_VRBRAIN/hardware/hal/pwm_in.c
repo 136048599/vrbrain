@@ -315,7 +315,10 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 		    TIM_ICInit(channel.tim, &TIM_ICInitStructure);
 
 		    }
-		break;
+		    if (pwm_capture_callback)
+			{
+			pwm_capture_callback(i, input->capture);
+			}
 		}
 	    }
 	}

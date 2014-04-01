@@ -23,6 +23,7 @@ public:
     void clear_overrides();
 private:
     static void rxIntPPMSUM(uint8_t state, uint16_t value);
+    static void rxIntPPM(uint8_t state, uint16_t value);
     void InitDefaultPPM(char board);
 
     unsigned int ppm_sum_channel;

@@ -76,7 +76,12 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
 
 	}
     }
-
+void VRBRAINRCInput::rxIntPPM(uint8_t chan, uint16_t value)
+    {
+    _last_input_interrupt_time = hal.scheduler->millis();
+    _pulse_capt[chan] = value;
+    _valid_channels = 5;
+    }
 
 VRBRAINRCInput::VRBRAINRCInput()
     {
@@ -145,6 +150,7 @@ void VRBRAINRCInput::init(void* machtnichts)
 	    pinData[channel].edge = FALLING_EDGE;
 	// Init Radio In
 	hal.console->println("Init Default PWM");
+	attachPWMCaptureCallback(rxIntPPM);
 	}
     else //PPMSUM
 	{
