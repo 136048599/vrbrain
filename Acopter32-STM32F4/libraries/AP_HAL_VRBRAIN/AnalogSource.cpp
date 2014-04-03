@@ -40,7 +40,9 @@ VRBRAINAnalogSource::VRBRAINAnalogSource(uint8_t pin) :
     _settle_time_ms(0),
     _read_start_time_ms(0)
 {
+    if(pin != ANALOG_INPUT_NONE) {
 	set_pin(pin);
+    }
 }
 
 float VRBRAINAnalogSource::read_average() {

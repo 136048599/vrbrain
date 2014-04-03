@@ -56,7 +56,7 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
     {
     static uint8_t  channel_ctr;
     _last_input_interrupt_time = hal.scheduler->millis();
-    if (value > 4000) // Frame synchronization
+    if (value >= 4000) // Frame synchronization
 	{
 	    if( channel_ctr >= VRBRAIN_RC_INPUT_MIN_CHANNELS ) {
 		_valid_channels = channel_ctr;
