@@ -107,6 +107,8 @@ public:
     ///
     /// shared methods
     ///
+    uint8_t		_wpnav_reset;           // ST-JD : init_loiter_target ask for a loiter reset at first loiter_update
+    uint8_t 	_accel_reset;
 
     /// get desired roll, pitch which should be fed into stabilize controllers
     int32_t get_desired_roll() const { return _desired_roll; };
