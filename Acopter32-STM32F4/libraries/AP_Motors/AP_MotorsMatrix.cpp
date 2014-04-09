@@ -250,7 +250,7 @@ void AP_MotorsMatrix::output_armed()
         thr_adj = _rc_throttle->radio_out - out_best_thr_pwm;
 
         // calc upper and lower limits of thr_adj
-        int16_t thr_adj_max = out_max_pwm-(out_best_thr_pwm+rpy_high);
+        int16_t thr_adj_max = max(out_max_pwm-(out_best_thr_pwm+rpy_high),0);
 
         // if we are increasing the throttle (situation #2 above)..
         if (thr_adj > 0) {
@@ -329,7 +329,7 @@ void AP_MotorsMatrix::output_disarmed()
     output_min();
 }
 
-// output_disarmed - sends commands to the motors
+// output_test - spin each motor for a moment to allow the user to confirm the motor order and spin direction
 void AP_MotorsMatrix::output_test()
 {
     uint8_t min_order, max_order;
