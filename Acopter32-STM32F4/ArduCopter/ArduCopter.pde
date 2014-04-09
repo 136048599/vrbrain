@@ -1,6 +1,6 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduCopter V3.1.15"
+#define THISFIRMWARE "ArduCopter V3.1.15-XTRACE"
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -839,6 +839,13 @@ static AC_Sprayer sprayer(&inertial_nav);
 #if EPM_ENABLED == ENABLED
 static AP_EPM epm;
 #endif
+
+////////////////////////////////////////////////////////////////////////////////
+// GUIDED mode
+////////////////////////////////////////////////////////////////////////////////
+static uint8_t ROI_loiter;
+static uint8_t roi_mode = 0;
+static struct Location *roi_loc;
 
 ////////////////////////////////////////////////////////////////////////////////
 // function definitions to keep compiler from complaining about undeclared functions

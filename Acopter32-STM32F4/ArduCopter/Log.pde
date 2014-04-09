@@ -48,6 +48,7 @@ print_log_menu(void)
         if (g.log_bitmask & MASK_LOG_OPTFLOW) cliSerial->printf_P(PSTR(" OPTFLOW"));
         if (g.log_bitmask & MASK_LOG_COMPASS) cliSerial->printf_P(PSTR(" COMPASS"));
         if (g.log_bitmask & MASK_LOG_CAMERA) cliSerial->printf_P(PSTR(" CAMERA"));
+        if (g.log_bitmask & MASK_LOG_ROI) cliSerial->printf_P(PSTR(" ROI"));
     }
 
     cliSerial->println();
@@ -138,6 +139,7 @@ select_logs(uint8_t argc, const Menu::arg *argv)
         TARG(OPTFLOW);
         TARG(COMPASS);
         TARG(CAMERA);
+        TARG(ROI);
  #undef TARG
     }
 
@@ -652,6 +654,34 @@ static void Log_Write_Camera()
 #endif
 }
 
+
+struct PACKED log_Roi {
+    LOG_PACKET_HEADER;
+    uint32_t gps_time;
+    uint16_t gps_week;
+    int32_t  latitude;
+    int32_t  longitude;
+    int32_t  altitude;
+    uint8_t  enabled;
+    uint8_t  roi_type;
+};
+
+// Write a Roi packet
+static void Log_Write_Roi(struct Location *roi_loc, uint8_t type)
+{
+    struct log_Roi pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_ROI_MSG),
+        gps_time    : g_gps->time_week_ms,
+        gps_week    : g_gps->time_week,
+        latitude    : roi_loc->lat,
+        longitude   : roi_loc->lng,
+        altitude    : roi_loc->alt,
+        enabled     : roi_loc->p1,
+        roi_type    : type
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Error {
     LOG_PACKET_HEADER;
     uint8_t sub_system;
@@ -664,7 +694,7 @@ static void Log_Write_Error(uint8_t sub_system, uint8_t error_code)
     struct log_Error pkt = {
         LOG_PACKET_HEADER_INIT(LOG_ERROR_MSG),
         sub_system    : sub_system,
-        error_code    : error_code,
+        error_code    : error_code
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -713,6 +743,8 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "DFLT",  "Bf",         "Id,Value" },
     { LOG_CAMERA_MSG, sizeof(log_Camera),                 
       "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
+    { LOG_ROI_MSG, sizeof(log_Roi),
+      "ROI",   "IHLLeBB",   "GPSTime,GPSWeek,Lat,Lng,Alt,Enable,Type" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
 };
