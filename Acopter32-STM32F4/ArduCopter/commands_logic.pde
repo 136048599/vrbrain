@@ -106,7 +106,7 @@ static void process_now_command()
 
     case MAV_CMD_DO_SET_ROI:                // 201
         // point the copter and camera at a region of interest (ROI)
-        do_roi();
+        do_roi(&command_cond_queue);
         break;
 
 #if CAMERA == ENABLED
@@ -826,6 +826,7 @@ static bool verify_yaw()
 // this is not actually a mission command but rather a 
 static void do_guided(const struct Location *cmd)
 {
+/*
     bool first_time = false;
     // switch to guided mode if we're not already in guided mode
     if (control_mode != GUIDED) {
@@ -836,11 +837,12 @@ static void do_guided(const struct Location *cmd)
             return;
         }
     }
-
+*/
     // set wp_nav's destination
     Vector3f pos = pv_location_to_vector(*cmd);
     wp_nav.set_destination(pos);
 
+/*
     // initialise wp_bearing for reporting purposes
     wp_bearing = wp_nav.get_bearing_to_destination();
 
@@ -853,6 +855,7 @@ static void do_guided(const struct Location *cmd)
             original_wp_bearing = wp_bearing;
         }
     }
+*/
 }
 
 static void do_change_speed()
@@ -905,16 +908,36 @@ static void do_set_home()
 //          and possibly rotating the copter to point at the ROI if our mount type does not support a yaw feature
 //          Note: the ROI should already be in the command_nav_queue global variable
 //	TO-DO: add support for other features of MAV_CMD_DO_SET_ROI including pointing at a given waypoint
-static void do_roi()
+static void do_roi(struct Location *r_loc)
 {
+    // TO-DO: expand handling of the do_nav_roi to support all modes of the MAVLink.  Currently we only handle mode 4 (see below)
+    //		0: do nothing
+    //		1: point at next waypoint
+    //		2: point at a waypoint taken from WP# parameter (2nd parameter?)
+    //		3: point at a location given by alt, lon, lat parameters
+    //		4: point at a target given a target id (can't be implemented)
+
+    roi_mode = r_loc->p1;
+    roi_loc = r_loc;
+
+    switch (roi_mode){
+    case 0:
+	//disable ROI
+	set_yaw_mode(YAW_HOLD);
+	break;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    default:
 #if MOUNT == ENABLED
     // check if mount type requires us to rotate the quad
     if( camera_mount.get_mount_type() != AP_Mount::k_pan_tilt && camera_mount.get_mount_type() != AP_Mount::k_pan_tilt_roll ) {
-        yaw_look_at_WP = pv_location_to_vector(command_cond_queue);
+        yaw_look_at_WP = pv_location_to_vector(*roi_loc);
         set_yaw_mode(YAW_LOOK_AT_LOCATION);
     }
     // send the command to the camera mount
-    camera_mount.set_roi_cmd(&command_cond_queue);
+    camera_mount.set_roi_cmd(roi_loc);
     
     // TO-DO: expand handling of the do_nav_roi to support all modes of the MAVLink.  Currently we only handle mode 4 (see below)
     //		0: do nothing
@@ -924,9 +947,11 @@ static void do_roi()
     //		4: point at a target given a target id (can't be implemented)
 #else
     // if we have no camera mount aim the quad at the location
-    yaw_look_at_WP = pv_location_to_vector(command_cond_queue);
+    yaw_look_at_WP = pv_location_to_vector(*roi_loc);
     set_yaw_mode(YAW_LOOK_AT_LOCATION);
 #endif
+    break;
+    }
 }
 
 // do_take_picture - take a picture with the camera library

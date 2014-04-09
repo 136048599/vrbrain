@@ -965,7 +965,8 @@
     MASK_LOG_NTUN | \
     MASK_LOG_RCIN | \
     MASK_LOG_CMD | \
-    MASK_LOG_CURRENT
+    MASK_LOG_CURRENT | \
+    MASK_LOG_ROI
 #else
  // PX4, Pixhawk, FlyMaple default logging
  # define DEFAULT_LOG_BITMASK \
