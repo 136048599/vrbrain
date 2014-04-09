@@ -597,6 +597,11 @@ void AC_PosControl::rate_to_accel_xy(float dt)
     if (dt == 0.0) {
         _accel_target.x = 0;
         _accel_target.y = 0;
+    } else if(_flags.accel_reset) {
+	_flags.accel_reset = false;
+	_vel_last.x = _vel_target.x;
+	_vel_last.y = _vel_target.y;
+	return;
     } else {
         // feed forward desired acceleration calculation
         _accel_target.x = (_vel_target.x - _vel_last.x)/dt;

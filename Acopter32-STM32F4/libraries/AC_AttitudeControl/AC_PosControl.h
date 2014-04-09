@@ -161,6 +161,9 @@ public:
     /// trigger_xy - used to notify the position controller than an update has been made to the position or desired velocity so that the position controller will run as soon as possible after the update
     void trigger_xy() { _flags.force_recalc_xy = true; }
 
+    /// reset_accel - used to notify the position controller than a new position has bee saved, so the accels need to be reset to avoid spikes.
+    void reset_accel() { _flags.accel_reset  = true; }
+
     /// update_pos_controller - run the position controller - should be called at 100hz or higher
     ///     when use_desired_velocity is true the desired velocity (i.e. feed forward) is incorporated at the pos_to_rate step
     void update_pos_controller(bool use_desired_velocity);
@@ -199,6 +202,7 @@ private:
             uint8_t recalc_leash_xy : 1;    // 1 if we should recalculate the xy axis leash length
             uint8_t force_recalc_xy : 1;    // 1 if we want the xy position controller to run at it's next possible time.  set by loiter and wp controllers after they have updated the target position.
             uint8_t slow_cpu        : 1;    // 1 if we are running on a slow_cpu machine.  xy position control is broken up into multiple steps
+            uint8_t accel_reset     : 1;    // 1 if we need to reset accels because a new set_position has occured (follow me)
     } _flags;
 
     // limit flags structure
