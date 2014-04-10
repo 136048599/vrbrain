@@ -860,7 +860,7 @@ get_throttle_accel(int16_t z_target_accel)
     uint32_t now = millis();
 
     // Calculate Earth Frame Z acceleration
-    z_accel_meas = -(ahrs.get_accel_ef().z + GRAVITY_MSS) * 100;
+    z_accel_meas = -(ahrs.get_accel_ef().z + GRAVITY_MSS) * 100.f;
 
     // reset target altitude if this controller has just been engaged
     if( now - last_call_ms > 100 ) {
@@ -1053,7 +1053,7 @@ get_throttle_althold(int32_t target_alt, int16_t min_climb_rate, int16_t max_cli
         desired_rate = 0;
     }
 
-    desired_rate = constrain_float(desired_rate, min_climb_rate, max_climb_rate);
+    //desired_rate = constrain_float(desired_rate, min_climb_rate, max_climb_rate);
 
     // call rate based throttle controller which will update accel based throttle controller targets
     get_throttle_rate(desired_rate);

@@ -443,6 +443,7 @@ void AC_WPNav::set_origin_and_destination(const Vector3f& origin, const Vector3f
     _track_desired = 0;
     _target = origin;
     _flags.reached_destination = false;
+    _wpnav_reset = 1; //reset wpnav update
 
     // initialise the limited speed to current speed along the track
     const Vector3f &curr_vel = _inav->get_velocity();
@@ -583,6 +584,10 @@ void AC_WPNav::update_wpnav()
         dt = 0.0;
         reset_I();
         _wpnav_step = 0;
+    } else if (_wpnav_reset > 0) {
+	_wpnav_step = 0;
+	_wpnav_reset = 0;
+	_accel_reset = 1;
     }
 
     // reset step back to 0 if 0.1 seconds has passed and we completed the last full cycle
@@ -686,6 +691,13 @@ void AC_WPNav::get_loiter_velocity_to_acceleration(float vel_lat, float vel_lon,
     if( dt == 0.0f ) {
         desired_accel.x = 0;
         desired_accel.y = 0;
+
+    } else if(_accel_reset > 0) {
+	_accel_reset = 0;
+	//noop keep last desidered accel to overcome glitches;
+	 _vel_last.x = vel_lat;
+	 _vel_last.y = vel_lon;
+	 return;
     } else {
         // feed forward desired acceleration calculation
         desired_accel.x = (vel_lat - _vel_last.x)/dt;

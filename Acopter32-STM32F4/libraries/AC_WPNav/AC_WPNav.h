@@ -129,6 +129,9 @@ public:
 	/// ST-JD : get desired roll, pitch which should be fed into stabilize controllers
     float get_desired_acc_x() const { return desired_accel.x; };
     float get_desired_acc_y() const { return desired_accel.y; };
+	
+    uint8_t		_wpnav_reset;
+    uint8_t 	_accel_reset;
 
     /// get desired roll, pitch which should be fed into stabilize controllers
     int32_t get_desired_roll() const { return _desired_roll; };
