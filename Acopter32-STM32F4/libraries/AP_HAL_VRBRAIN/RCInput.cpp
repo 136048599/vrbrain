@@ -151,7 +151,7 @@ void VRBRAINRCInput::init(void* machtnichts)
         }
 
         if (g_is_ppmsum == 3) {
-            SBUS &s(hal.uartS);
+            SBUS s(hal.uartS);
             s.begin();
             hal.console->println("Init SBUS");
         } else if (g_is_ppmsum == 1) {
