@@ -2,6 +2,7 @@
 #include <timer.h>
 #include "RCInput.h"
 #include <pwm_in.h>
+#include <utility/SBUS.h>
 
 
 // Constructors ////////////////////////////////////////////////////////////////
@@ -44,37 +45,6 @@ typedef struct
     } tPinTimingData;
 volatile static tPinTimingData pinData[8];
 
-/* constrain captured pulse to be between min and max pulsewidth. */
-static inline uint16_t constrain_pulse(uint16_t p) {
-    if (p > RC_INPUT_MAX_PULSEWIDTH) return RC_INPUT_MAX_PULSEWIDTH;
-    if (p < RC_INPUT_MIN_PULSEWIDTH) return RC_INPUT_MIN_PULSEWIDTH;
-    return p;
-}
-
-void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
-    {
-    static uint8_t  channel_ctr;
-
-    if (value >= 4000) // Frame synchronization
-	{
-	    if( channel_ctr >= VRBRAIN_RC_INPUT_MIN_CHANNELS ) {
-		_valid_channels = channel_ctr;
-	    }
-	    channel_ctr = 0;
-	}
-    else
-	{
-        if (channel_ctr < VRBRAIN_RC_INPUT_NUM_CHANNELS) {
-            _pulse_capt[channel_ctr] = value;
-            _last_pulse[channel_ctr] = systick_uptime();
-            channel_ctr++;
-            if (channel_ctr == VRBRAIN_RC_INPUT_NUM_CHANNELS) {
-                _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
-            }
-        }
-
-	}
-    }
 
 
 VRBRAINRCInput::VRBRAINRCInput()
@@ -138,18 +108,64 @@ void VRBRAINRCInput::init(void* machtnichts)
     else
 	g_is_ppmsum = 0;
 
-    if (!g_is_ppmsum) //PWM
-	{
-	for (byte channel = 0; channel < 8; channel++)
-	    pinData[channel].edge = FALLING_EDGE;
-	// Init Radio In
-	hal.console->println("Init Default PWM");
-	}
-    else //PPMSUM
-	{
-	// Init Radio In
-	hal.console->println("Init Default PPMSUM");
-	attachPWMCaptureCallback(rxIntPPMSUM);
+    //test for SBUS
+    uint8_t channel8_status = 0;
+        uint8_t pin7, pin8;
+        //input pin 2
+        pin7 = 14;
+        //input pin 3
+        pin8 = 15;
+
+        //set pin2 as output and pin 3 as input
+        hal.gpio->pinMode(pin7, OUTPUT);
+        hal.gpio->pinMode(pin8, INPUT);
+
+        //default pin3 to 0
+        hal.gpio->write(pin8, 0);
+        hal.scheduler->delay(1);
+
+        //write 1 to pin 2 and read pin3
+        hal.gpio->write(pin7, 1);
+        hal.scheduler->delay(1);
+        //if pin3 is 1 increment counter
+        if (hal.gpio->read(pin8) == 1)
+            channel8_status++;
+
+        //write 0 to pin 2 and read pin3
+        hal.gpio->write(pin7, 0);
+        hal.scheduler->delay(1);
+        //if pin3 is 0 increment counter
+        if (hal.gpio->read(pin8) == 0)
+            channel8_status++;
+
+        //write 1 to pin 2 and read pin3
+        hal.gpio->write(pin7, 1);
+        hal.scheduler->delay(1);
+        //if pin3 is 1 increment counter
+        if (hal.gpio->read(pin8) == 1)
+            channel8_status++;
+
+        //if counter is 3 then we are in SBUS
+        if (channel8_status == 3) {
+    	    g_is_ppmsum = 3; //SBUS detected
+        }
+
+        if (g_is_ppmsum == 3) {
+            SBUS &s(hal.uartS);
+            s.begin();
+            hal.console->println("Init SBUS");
+        } else if (g_is_ppmsum == 1) {
+	    // Init Radio In
+	    hal.console->println("Init Default PPMSUM");
+	    attachPWMCaptureCallback(rxIntPPMSUM);
+
+	} else {//PPMSUM
+            for (byte channel = 0; channel < 8; channel++) {
+        	pinData[channel].edge = FALLING_EDGE;
+            }
+	    // Init Radio In
+	    hal.console->println("Init Default PWM");
+
 	}
 
     pwmInit();
@@ -240,5 +256,37 @@ void VRBRAINRCInput::clear_overrides()
     for (int i = 0; i < 8; i++) {
 	set_override(i, 0);
     }
+    }
+
+/* constrain captured pulse to be between min and max pulsewidth. */
+static inline uint16_t constrain_pulse(uint16_t p) {
+    if (p > RC_INPUT_MAX_PULSEWIDTH) return RC_INPUT_MAX_PULSEWIDTH;
+    if (p < RC_INPUT_MIN_PULSEWIDTH) return RC_INPUT_MIN_PULSEWIDTH;
+    return p;
+}
+
+void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
+    {
+    static uint8_t  channel_ctr;
+
+    if (value >= 4000) // Frame synchronization
+	{
+	    if( channel_ctr >= VRBRAIN_RC_INPUT_MIN_CHANNELS ) {
+		_valid_channels = channel_ctr;
+	    }
+	    channel_ctr = 0;
+	}
+    else
+	{
+        if (channel_ctr < VRBRAIN_RC_INPUT_NUM_CHANNELS) {
+            _pulse_capt[channel_ctr] = value;
+            _last_pulse[channel_ctr] = systick_uptime();
+            channel_ctr++;
+            if (channel_ctr == VRBRAIN_RC_INPUT_NUM_CHANNELS) {
+                _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
+            }
+        }
+
+	}
     }
 

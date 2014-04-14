@@ -61,7 +61,9 @@ private:
     enum LEDPattern {
         NONE = 0,
         FAST_FLASH = 1,
-        OSCILLATE = 2
+        OSCILLATE = 2,
+        GPS_GLITCH = 3,
+        LOW_BATT = 4
     };
 
     /// buzzer_flag_type - bitmask of current state and ap_notify states we track

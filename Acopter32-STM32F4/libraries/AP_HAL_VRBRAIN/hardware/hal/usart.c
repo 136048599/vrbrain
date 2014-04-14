@@ -106,7 +106,7 @@ static usart_dev usart6 =
 	    .max_baud = 2250000UL,
 	    .irq = USART6_IRQn,
 	    .tx_timeout = 10000,
-	    .rx_pin = 200,
+	    .rx_pin = 13,
 	    .tx_pin = 200,
 	    .gpio_af = GPIO_AF_USART6
     };
