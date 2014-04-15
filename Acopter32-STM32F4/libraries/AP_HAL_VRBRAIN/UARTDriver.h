@@ -16,6 +16,7 @@ public:
   /* VRBRAIN implementations of UARTDriver virtual methods */
   void begin(uint32_t b);
   void begin(uint32_t b, uint16_t rxS, uint16_t txS);
+  void begin(uint32_t b, uint8_t sbus);
   void end();
   void flush();
   bool is_initialized(){ return _initialized; }
@@ -35,7 +36,6 @@ public:
   size_t write(const uint8_t *buffer, size_t size);
 
 private:
-
     struct usart_dev *_usart_device;
     uint8_t _usb;
     uint8_t _usb_present;

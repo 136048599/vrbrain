@@ -86,7 +86,7 @@ extern const stm32_pin_info PIN_MAP[BOARD_NR_GPIO_PINS] = {
     {_GPIOF,   NULL, _ADC3,  8, 0,    6}, /* D41/PF8 1*/
     {_GPIOF,   NULL, _ADC3,  9, 0,    7}, /* D42/PF9 2*/
     {_GPIOF,   NULL, _ADC3, 10, 0,    8}, /* D43/PF10 3*/
-    {_GPIOF,   NULL, NULL, 11, 0, ADCx}, /* D44/PF11 4*/
+    {_GPIOF,   NULL,  NULL, 11, 0, ADCx}, /* D44/PF11 4*/
     {_GPIOB, TIMER3, _ADC1,  1, 4,    9}, /* D45/PB1 5*/
     {_GPIOB, TIMER3, _ADC1,  0, 3,    8}, /* D46/PB0 6*/
     {_GPIOA, TIMER2, _ADC1,  0, 1,    0}, /* D47/PA0 7*/
@@ -120,21 +120,21 @@ extern const stm32_pin_info PIN_MAP[BOARD_NR_GPIO_PINS] = {
     {_GPIOE,   NULL, NULL,  8, 0, ADCx}, /* D72/PE8  2*/
     {_GPIOF,   NULL, NULL, 12, 0, ADCx}, /* D73/PF12 3*/
     {_GPIOE,   NULL, NULL,  6, 0, ADCx}, /* D74/PE6  4*/
-    {_GPIOE,   TIMER1, NULL,  9, 1, ADCx}, /* D75/PE9  CH1_IN - PPMSUM*/
+    {_GPIOE, TIMER1, NULL,  9, 1, ADCx}, /* D75/PE9  CH1_IN - PPMSUM*/
     {_GPIOF,   NULL, NULL, 13, 0, ADCx}, /* D76/PF13 6*/
     {_GPIOE,   NULL, NULL, 10, 0, ADCx}, /* D77/PE10 7*/
     {_GPIOF,   NULL, NULL, 14, 0, ADCx}, /* D78/PF14 8*/
     {_GPIOG,   NULL, NULL,  9, 0, ADCx}, /* D79/PG9  9*/
-    {_GPIOE,   TIMER1, NULL, 11, 2, ADCx}, /* D80/PE11 CH2_IN*/
+    {_GPIOE, TIMER1, NULL, 11, 2, ADCx}, /* D80/PE11 CH2_IN*/
     {_GPIOF,   NULL, NULL, 15, 0, ADCx}, /* D81/PF15 1*/
     {_GPIOG,   NULL, NULL, 10, 0, ADCx}, /* D82/PG10 2*/
     {_GPIOE,   NULL, NULL, 12, 0, ADCx}, /* D83/PE12 3*/
     {_GPIOG,   NULL, NULL,  0, 0, ADCx}, /* D84/PG0  4*/
     {_GPIOD,   NULL, NULL,  5, 0, ADCx}, /* D85/PD5  5*/
-    {_GPIOE,   TIMER1, NULL, 13, 3, ADCx}, /* D86/PE13 CH3_IN*/
+    {_GPIOE, TIMER1, NULL, 13, 3, ADCx}, /* D86/PE13 CH3_IN*/
     {_GPIOG,   NULL, NULL,  1, 0, ADCx}, /* D87/PG1  7*/
     {_GPIOD,   NULL, NULL,  4, 0, ADCx}, /* D88/PD4  8*/
-    {_GPIOE,   TIMER1, NULL, 14, 4, ADCx}, /* D89/PE14 CH4_IN*/
+    {_GPIOE, TIMER1, NULL, 14, 4, ADCx}, /* D89/PE14 CH4_IN*/
     {_GPIOG,   NULL, NULL,  2, 0, ADCx}, /* D90/PG2  90*/
     {_GPIOE,   NULL, NULL,  1, 0, ADCx}, /* D91/PE1  1*/
     {_GPIOE,   NULL, NULL, 15, 0, ADCx}, /* D92/PE15 2*/

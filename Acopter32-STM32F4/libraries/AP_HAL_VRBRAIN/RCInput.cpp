@@ -23,6 +23,8 @@ extern const AP_HAL::HAL& hal;
 #define MINCHECK 900
 #define MAXCHECK 2100
 
+//SBUSClass VRBRAINRCInput::_sbus(hal.uartC);
+
 /* private variables to communicate with input capture isr */
 volatile uint16_t VRBRAINRCInput::_pulse_capt[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
 volatile uint32_t VRBRAINRCInput::_last_pulse[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
@@ -153,8 +155,10 @@ void VRBRAINRCInput::init(void* machtnichts)
 
         if (g_is_ppmsum == 3) {
             hal.console->println("Init SBUS");
-            SBUSClass s(void);
 
+            _sbus = new SBUSClass(hal.uartD);
+
+            _sbus->begin();
 
         } else if (g_is_ppmsum == 1) {
 	    // Init Radio In
@@ -192,7 +196,10 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
     uint32_t pulse;
 
     noInterrupts();
-    if (!g_is_ppmsum)
+    if (g_is_ppmsum == 3) {
+	_sbus->getChannel(ch);
+
+    }else if (g_is_ppmsum == 0)
 	{
 	//data = rcPinValue[ch];
 	data = pwmRead(ch);
@@ -218,14 +225,18 @@ uint8_t VRBRAINRCInput::read(uint16_t* periods, uint8_t len)
     noInterrupts();
     for (uint8_t i = 0; i < len; i++)
 	{
-	    if (!g_is_ppmsum)
+	if (g_is_ppmsum == 3) {
+	    periods[i] = _sbus->getChannel(i);
+
+	} else if (g_is_ppmsum == 0) {
 		periods[i] = pwmRead(i);
-	    else{
-		if ( i == 2 && (systick_uptime() - _last_pulse[i] > 50) )
+
+	} else {
+	    if ( i == 2 && (systick_uptime() - _last_pulse[i] > 50) )
 		    periods[i] = 900;
 		else
 		    periods[i] = _pulse_capt[i];
-	    }
+	}
 
 	    if (_override[i] != 0)
 		periods[i] = _override[i];
@@ -247,7 +258,7 @@ bool VRBRAINRCInput::set_overrides(int16_t *overrides, uint8_t len)
 bool VRBRAINRCInput::set_override(uint8_t channel, int16_t override)
     {
     if (override < 0) return false; /* -1: no change. */
-    if (channel < 8) {
+    if (channel < VRBRAIN_RC_INPUT_NUM_CHANNELS) {
         _override[channel] = override;
         if (override != 0) {
             return true;
@@ -258,7 +269,7 @@ bool VRBRAINRCInput::set_override(uint8_t channel, int16_t override)
 
 void VRBRAINRCInput::clear_overrides()
     {
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < VRBRAIN_RC_INPUT_NUM_CHANNELS; i++) {
 	set_override(i, 0);
     }
     }

@@ -4,6 +4,7 @@
 
 #include <AP_HAL_VRBRAIN.h>
 #include <AP_HAL.h>
+#include <utility/SBUS.h>
 
 #define VRBRAIN_RC_INPUT_MIN_CHANNELS 4
 #define VRBRAIN_RC_INPUT_NUM_CHANNELS 8
@@ -43,6 +44,8 @@ private:
     static volatile uint16_t _pulse_capt[VRBRAIN_RC_INPUT_NUM_CHANNELS];
     static volatile uint32_t _last_pulse[VRBRAIN_RC_INPUT_NUM_CHANNELS];
     static volatile uint8_t  _valid_channels;
+
+    SBUSClass *_sbus;
 };
 
 #endif // __AP_HAL_VRBRAIN_RCINPUT_H__

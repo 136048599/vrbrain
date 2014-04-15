@@ -6,27 +6,49 @@
 
 extern const AP_HAL::HAL& hal;
 
-void SBUSClass::begin() {
-	SBUSClass::begin(true);
-}
+/*
+ * S.bus decoder matrix.
+ *
+ * Each channel value can come from up to 3 input bytes. Each row in the
+ * matrix describes up to three bytes, and each entry gives:
+ *
+ * - byte offset in the data portion of the frame
+ * - right shift applied to the data byte
+ * - mask for the data byte
+ * - left shift applied to the result into the channel value
+ */
+struct sbus_bit_pick {
+	uint8_t byte;
+	uint8_t rshift;
+	uint8_t mask;
+	uint8_t lshift;
+};
+static const struct sbus_bit_pick sbus_decoder[SBUS_INPUT_CHANNELS][3] = {
+	/*  0 */ { { 0, 0, 0xff, 0}, { 1, 0, 0x07, 8}, { 0, 0, 0x00,  0} },
+	/*  1 */ { { 1, 3, 0x1f, 0}, { 2, 0, 0x3f, 5}, { 0, 0, 0x00,  0} },
+	/*  2 */ { { 2, 6, 0x03, 0}, { 3, 0, 0xff, 2}, { 4, 0, 0x01, 10} },
+	/*  3 */ { { 4, 1, 0x7f, 0}, { 5, 0, 0x0f, 7}, { 0, 0, 0x00,  0} },
+	/*  4 */ { { 5, 4, 0x0f, 0}, { 6, 0, 0x7f, 4}, { 0, 0, 0x00,  0} },
+	/*  5 */ { { 6, 7, 0x01, 0}, { 7, 0, 0xff, 1}, { 8, 0, 0x03,  9} },
+	/*  6 */ { { 8, 2, 0x3f, 0}, { 9, 0, 0x1f, 6}, { 0, 0, 0x00,  0} },
+	/*  7 */ { { 9, 5, 0x07, 0}, {10, 0, 0xff, 3}, { 0, 0, 0x00,  0} },
+	/*  8 */ { {11, 0, 0xff, 0}, {12, 0, 0x07, 8}, { 0, 0, 0x00,  0} },
+	/*  9 */ { {12, 3, 0x1f, 0}, {13, 0, 0x3f, 5}, { 0, 0, 0x00,  0} },
+	/* 10 */ { {13, 6, 0x03, 0}, {14, 0, 0xff, 2}, {15, 0, 0x01, 10} },
+	/* 11 */ { {15, 1, 0x7f, 0}, {16, 0, 0x0f, 7}, { 0, 0, 0x00,  0} },
+	/* 12 */ { {16, 4, 0x0f, 0}, {17, 0, 0x7f, 4}, { 0, 0, 0x00,  0} },
+	/* 13 */ { {17, 7, 0x01, 0}, {18, 0, 0xff, 1}, {19, 0, 0x03,  9} },
+	/* 14 */ { {19, 2, 0x3f, 0}, {20, 0, 0x1f, 6}, { 0, 0, 0x00,  0} },
+	/* 15 */ { {20, 5, 0x07, 0}, {21, 0, 0xff, 3}, { 0, 0, 0x00,  0} }
+};
 
-void SBUSClass::begin(bool useTimer) {
+void SBUSClass::begin() {
 
 	for (byte i = 0; i<18; i++) {
 		_channels[i]      = 0;
 	}
 
-	_goodFrames         = 0;
-	_lostFrames         = 0;
-	_decoderErrorFrames = 0;
-	_failsafe           = SBUS_FAILSAFE_INACTIVE;
-
-	gpio_set_af_mode(_GPIOC, 7, GPIO_AF_USART6);
-	gpio_set_mode(_GPIOC, 7, GPIO_INPUT_FLOATING);
-
-	usart_init(_USART6);
-	usart_setup(_USART6, (uint32)100000, USART_WordLength_8b, USART_StopBits_2, USART_Parity_Even, USART_Mode_Rx, USART_HardwareFlowControl_None, 10000);
-	usart_enable(_USART6);
+	_serial->begin(100000,1);
 
 	hal.scheduler->register_timer_process(AP_HAL_MEMBERPROC(&SBUSClass::_process));
 }
@@ -35,8 +57,8 @@ void SBUSClass::_process() {
 	static byte buffer[25];
 	static byte buffer_index = 0;
 	
-	while (usart_data_available(_USART6)) {
-		byte rx = usart_getc(_USART6);
+	while (_serial->available()) {
+		byte rx = _serial->read();
 		if (buffer_index == 0 && rx != SBUS_STARTBYTE) {
 			//incorrect start byte, out of sync
 			_decoderErrorFrames++;
@@ -87,39 +109,35 @@ void SBUSClass::_process() {
 	}
 }
 
-int SBUSClass::getChannel(int channel) {
-	if (channel < 1 or channel > 18) {
+uint16_t SBUSClass::getChannel(int channel) {
+	if (channel < 0 or channel > 17) {
 		return 0;
 	} else {
-		return _channels[channel - 1];
+	    if (channel == 2 && _failsafe) { //hardcoded failsafe action if RX is in failsafe, put throttle to 900
+		return 900;
+	    } else {
+		return (uint16_t)(_channels[channel] * SBUS_SCALE_FACTOR +.5f) + SBUS_SCALE_OFFSET;
+	    }
 	}
 }
 
-int SBUSClass::getNormalizedChannel(int channel) {
-	if (channel < 1 or channel > 18) {
-		return 0;
-	} else {
-		return (int) lround(_channels[channel - 1] / 9.92) - 100; //9.92 or 10.24?
-	}
-}
-
-int SBUSClass::getFailsafeStatus() {
+uint16_t SBUSClass::getFailsafeStatus() {
 	return _failsafe;
 }
 
-int SBUSClass::getFrameLoss() {
+uint16_t SBUSClass::getFrameLoss() {
 	return (int) ((_lostFrames + _decoderErrorFrames) * 100 / (_goodFrames + _lostFrames + _decoderErrorFrames));
 }
 
-long SBUSClass::getGoodFrames() {
+uint64_t SBUSClass::getGoodFrames() {
 	return _goodFrames;
 }
 
-long SBUSClass::getLostFrames() {
+uint64_t SBUSClass::getLostFrames() {
 	return _lostFrames;
 }
 
-long SBUSClass::getDecoderErrorFrames() {
+uint64_t SBUSClass::getDecoderErrorFrames() {
 	return _decoderErrorFrames;
 }
 

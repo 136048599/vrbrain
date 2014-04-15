@@ -31,11 +31,18 @@ void VRBRAINRCOutput::init(void* implspecific)
     out_ch6=45;  //Timer3 ch4
     out_ch7=101; //Timer4 ch3
     out_ch8=25;  //Timer4 ch4
-    out_ch9=23;  //Timer8 ch1
-    out_ch10=24; //Timer8 ch2
-    out_ch11=89; //Timer8 ch3
-    out_ch12=60; //Timer8 ch4
 
+    if(g_is_ppmsum == 3) { //if we have SBUS enabled use INPUT1-4 as outputs
+	out_ch9=75;  //Timer1 ch1 PWM_IN_1
+	out_ch10=80; //Timer1 ch2 PWM_IN_2
+	out_ch11=86; //Timer1 ch3 PWM_IN_3
+	out_ch12=89; //Timer1 ch4 PWM_IN_4
+    }else if (g_is_ppmsum == 1) {  //if we have PPMSUM enabled use INPUT5-8 as outputs
+	out_ch9=12;  //Timer8 ch1 PWM_IN_5
+	out_ch10=13; //Timer8 ch2 PWM_IN_6
+	out_ch11=14; //Timer8 ch3 PWM_IN_7
+	out_ch12=15; //Timer8 ch4 PWM_IN_8
+    }
     outPin[MOTORID1] = out_ch1;
     outPin[MOTORID2] = out_ch2;
     outPin[MOTORID3] = out_ch3;
@@ -54,15 +61,20 @@ void VRBRAINRCOutput::init(void* implspecific)
     if (g_ext_mag_detect){
 	timer_disable(TIMER4);
 
-	if(g_is_ppmsum){
+	if(g_is_ppmsum == 1){
+	    //enable timer on the pwm in ch5-8
+	   timerDefaultConfig(TIMER8);
+	} else if (g_is_ppmsum == 3) {
+	    //enable timer on pmn in ch1-4
+	   timerDefaultConfig(TIMER1);
+	}
+	    /*enable 4 outputs if PPMSUM is detected*/
 	    outPin[MOTORID7] = out_ch9;
 	    outPin[MOTORID8] = out_ch10;
 	    outPin[MOTORID9] = out_ch11;
 	    outPin[MOTORID10] = out_ch12;
-	    /*enable 4 outputs if PPMSUM is detected*/
-	    timerDefaultConfig(TIMER8);
+
 	    _num_motors = 10;
-	}
 
     } else {
 
@@ -71,18 +83,22 @@ void VRBRAINRCOutput::init(void* implspecific)
 	/*else enable CH7 and CH8 on TIMER4*/
 	timerDefaultConfig(TIMER4);
 	_num_motors = 8;
-	if(g_is_ppmsum){
+
+	if(g_is_ppmsum == 1){ //PPMSUM
+	    //enable timer on the pwm in ch5-8
+	    timerDefaultConfig(TIMER8);
+	} else if (g_is_ppmsum == 3) { //SBUS
+	    //enable timer on pmn in ch1-4
+	    timerDefaultConfig(TIMER1);
+	}
+	if(g_is_ppmsum > 0) { //PPMSUM or SBUS
 	    outPin[MOTORID9] = out_ch9;
 	    outPin[MOTORID10] = out_ch10;
 	    outPin[MOTORID11] = out_ch11;
 	    outPin[MOTORID12] = out_ch12;
-	    /*enable 4 outputs if PPMSUM is detected*/
-	    timerDefaultConfig(TIMER8);
 	    _num_motors = 12;
 	}
     }
-    /*If ppm_sum is enabled, use inputs 5 to 8 for motor output*/
-
 
     for(int8_t i = MOTORID1; i <= (_num_motors -1); i++) {
 	hal.gpio->pinMode(outPin[i],PWM);
@@ -104,18 +120,28 @@ void VRBRAINRCOutput::set_freq(uint32_t chmask, uint16_t freq_hz)
 	TIM3->ARR = icr;
     }
     if(g_ext_mag_detect) {
-	if(g_is_ppmsum) {
+	if(g_is_ppmsum == 1) {
 	    if ((chmask & ( _BV(CH_7) | _BV(CH_8) | _BV(CH_9) | _BV(CH_10))) != 0) {
 		TIM8->ARR = icr;
+	    }
+	}
+	if (g_is_ppmsum == 3) {
+	    if ((chmask & ( _BV(CH_7) | _BV(CH_8) | _BV(CH_9) | _BV(CH_10))) != 0) {
+		TIM1->ARR = icr;
 	    }
 	}
     } else {
 	if ((chmask & ( _BV(CH_7) | _BV(CH_8))) != 0) {
 	    TIM4->ARR = icr;
 	}
-	if (g_is_ppmsum) {
+	if (g_is_ppmsum ==1) {
 	    if ((chmask & ( _BV(CH_9) | _BV(CH_10) | _BV(CH_11) | _BV(CH_12))) != 0) {
 		TIM8->ARR = icr;
+	    }
+	}
+	if (g_is_ppmsum == 3) {
+	    if ((chmask & ( _BV(CH_9) | _BV(CH_10) | _BV(CH_11) | _BV(CH_12))) != 0) {
+		TIM1->ARR = icr;
 	    }
 	}
     }
@@ -145,7 +171,11 @@ uint16_t VRBRAINRCOutput::get_freq(uint8_t ch) {
         case CH_10:
         case CH_11:
         case CH_12:
-            icr = (TIMER8->regs)->ARR;
+            if(g_is_ppmsum == 1) {
+        	icr = (TIMER8->regs)->ARR;
+            } else if (g_is_ppmsum == 3) {
+        	icr = (TIMER1->regs)->ARR;
+            }
             break;
         default:
             return 0;
