@@ -149,11 +149,13 @@ void VRBRAINRCInput::init(void* machtnichts)
         if (channel8_status == 3) {
     	    g_is_ppmsum = 3; //SBUS detected
         }
+        hal.console->println("Init SBUS");
 
         if (g_is_ppmsum == 3) {
-            SBUS s(hal.uartS);
-            s.begin();
             hal.console->println("Init SBUS");
+            SBUSClass s(void);
+
+
         } else if (g_is_ppmsum == 1) {
 	    // Init Radio In
 	    hal.console->println("Init Default PPMSUM");
@@ -168,13 +170,16 @@ void VRBRAINRCInput::init(void* machtnichts)
 
 	}
 
-    pwmInit();
+        if (g_is_ppmsum != 3) {
+            pwmInit();
+        }
+
     clear_overrides();
     }
 
 uint8_t VRBRAINRCInput::valid_channels()
     {
-    if(!g_is_ppmsum)
+    if(g_is_ppmsum != 1 )
 	return 4;
     else
 	return _valid_channels;

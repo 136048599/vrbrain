@@ -1,11 +1,16 @@
+#include <AP_HAL.h>
 #include "SBUS.h"
 #include <usart.h>
+#include <gpio_hal.h>
+#include <math.h>
 
-void SBUS::begin() {
-	SBUS::begin(true);
+extern const AP_HAL::HAL& hal;
+
+void SBUSClass::begin() {
+	SBUSClass::begin(true);
 }
 
-void SBUS::begin(bool useTimer) {
+void SBUSClass::begin(bool useTimer) {
 
 	for (byte i = 0; i<18; i++) {
 		_channels[i]      = 0;
@@ -16,20 +21,22 @@ void SBUS::begin(bool useTimer) {
 	_decoderErrorFrames = 0;
 	_failsafe           = SBUS_FAILSAFE_INACTIVE;
 
-	gpio_set_af_mode(_GPIOC, 7, _USART6->gpio_af);
+	gpio_set_af_mode(_GPIOC, 7, GPIO_AF_USART6);
 	gpio_set_mode(_GPIOC, 7, GPIO_INPUT_FLOATING);
 
 	usart_init(_USART6);
-	usart_setup(_USART6, (uint32)100000, USART_WordLength_8b, USART_StopBits_2, USART_Parity_Even, USART_Mode_Rx, USART_HardwareFlowControl_None, DEFAULT_TX_TIMEOUT);
+	usart_setup(_USART6, (uint32)100000, USART_WordLength_8b, USART_StopBits_2, USART_Parity_Even, USART_Mode_Rx, USART_HardwareFlowControl_None, 10000);
 	usart_enable(_USART6);
+
+	hal.scheduler->register_timer_process(AP_HAL_MEMBERPROC(&SBUSClass::_process));
 }
 
-void SBUS::process() {
+void SBUSClass::_process() {
 	static byte buffer[25];
 	static byte buffer_index = 0;
 	
-	while (_serial->available()) {
-		byte rx = _serial->read();
+	while (usart_data_available(_USART6)) {
+		byte rx = usart_getc(_USART6);
 		if (buffer_index == 0 && rx != SBUS_STARTBYTE) {
 			//incorrect start byte, out of sync
 			_decoderErrorFrames++;
@@ -80,7 +87,7 @@ void SBUS::process() {
 	}
 }
 
-int SBUS::getChannel(int channel) {
+int SBUSClass::getChannel(int channel) {
 	if (channel < 1 or channel > 18) {
 		return 0;
 	} else {
@@ -88,7 +95,7 @@ int SBUS::getChannel(int channel) {
 	}
 }
 
-int SBUS::getNormalizedChannel(int channel) {
+int SBUSClass::getNormalizedChannel(int channel) {
 	if (channel < 1 or channel > 18) {
 		return 0;
 	} else {
@@ -96,22 +103,23 @@ int SBUS::getNormalizedChannel(int channel) {
 	}
 }
 
-int SBUS::getFailsafeStatus() {
+int SBUSClass::getFailsafeStatus() {
 	return _failsafe;
 }
 
-int SBUS::getFrameLoss() {
+int SBUSClass::getFrameLoss() {
 	return (int) ((_lostFrames + _decoderErrorFrames) * 100 / (_goodFrames + _lostFrames + _decoderErrorFrames));
 }
 
-long SBUS::getGoodFrames() {
+long SBUSClass::getGoodFrames() {
 	return _goodFrames;
 }
 
-long SBUS::getLostFrames() {
+long SBUSClass::getLostFrames() {
 	return _lostFrames;
 }
 
-long SBUS::getDecoderErrorFrames() {
+long SBUSClass::getDecoderErrorFrames() {
 	return _decoderErrorFrames;
 }
+

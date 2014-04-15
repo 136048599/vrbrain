@@ -1,6 +1,7 @@
 #ifndef SBUS_h
 #define SBUS_h
 
+#include <AP_HAL.h>
 //#include "Arduino.h"
 
 #define SBUS_FAILSAFE_INACTIVE 0
@@ -9,12 +10,11 @@
 #define SBUS_ENDBYTE           0x00
 
 
-class SBUS {
+class SBUSClass {
 	public:
-		SBUS(AP_HAL::UARTDriver * serial) : _serial (serial) {}
+		SBUSClass(){}
 		void begin();
 		void begin(bool useTimer);
-		void process();
 		int getChannel(int channel);
 		int getNormalizedChannel(int channel);
 		int getFailsafeStatus();
@@ -23,6 +23,7 @@ class SBUS {
 		long getLostFrames();
 		long getDecoderErrorFrames();
 	private:
+		void _process();
 		AP_HAL::UARTDriver * _serial;
 		int _channels[18];
 		int _failsafe;
@@ -30,5 +31,7 @@ class SBUS {
 		long _lostFrames;
 		long _decoderErrorFrames;
 };
+
+extern SBUSClass SBUS;
 
 #endif
