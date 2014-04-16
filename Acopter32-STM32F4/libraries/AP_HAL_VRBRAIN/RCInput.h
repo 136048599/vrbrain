@@ -10,6 +10,8 @@
 #define VRBRAIN_RC_INPUT_NUM_CHANNELS 8
 #define PPM_SUM_CHANNEL 75
 
+
+
 class VRBRAIN::VRBRAINRCInput : public AP_HAL::RCInput {
 public:
     VRBRAINRCInput();
@@ -21,9 +23,19 @@ public:
     bool set_overrides(int16_t *overrides, uint8_t len);
     bool set_override(uint8_t channel, int16_t override);
     void clear_overrides();
+
+    enum RC_type {
+        SBUS,
+        PPMSUM,
+        DSM,
+        PWM
+    };
 private:
     static void rxIntPPMSUM(uint8_t state, uint16_t value);
     void InitDefaultPPM(char board);
+    void _detect_rc(void);
+    bool _sbus_dct();
+    bool _ppmsum_dct();
 
     unsigned int ppm_sum_channel;
     unsigned int input_channel_ch1;
@@ -46,6 +58,10 @@ private:
     static volatile uint8_t  _valid_channels;
 
     SBUSClass *_sbus;
+
+    RC_type _rc_type;
+    uint8_t _detected;
+
 };
 
 #endif // __AP_HAL_VRBRAIN_RCINPUT_H__

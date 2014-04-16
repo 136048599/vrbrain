@@ -1,8 +1,11 @@
+
+#include <AP_HAL.h>
 #include <exti.h>
 #include <timer.h>
 #include "RCInput.h"
 #include <pwm_in.h>
 #include <utility/SBUS.h>
+
 
 
 // Constructors ////////////////////////////////////////////////////////////////
@@ -65,118 +68,29 @@ void VRBRAINRCInput::init(void* machtnichts)
     input_channel_ch7 = 14;
     input_channel_ch8 = 15;
 
-    /*initial check for pin2-pin3 bridge. If detected switch to PPMSUM  */
-    //default to standard PPM
+    _detect_rc();
 
-    uint8_t channel3_status = 0;
-    uint8_t pin2, pin3;
-    //input pin 2
-    pin2 = 80;
-    //input pin 3
-    pin3 = 86;
-
-    //set pin2 as output and pin 3 as input
-    hal.gpio->pinMode(pin2, OUTPUT);
-    hal.gpio->pinMode(pin3, INPUT);
-
-    //default pin3 to 0
-    hal.gpio->write(pin3, 0);
-    hal.scheduler->delay(1);
-
-    //write 1 to pin 2 and read pin3
-    hal.gpio->write(pin2, 1);
-    hal.scheduler->delay(1);
-    //if pin3 is 1 increment counter
-    if (hal.gpio->read(pin3) == 1)
-	channel3_status++;
-
-    //write 0 to pin 2 and read pin3
-    hal.gpio->write(pin2, 0);
-    hal.scheduler->delay(1);
-    //if pin3 is 0 increment counter
-    if (hal.gpio->read(pin3) == 0)
-	channel3_status++;
-
-    //write 1 to pin 2 and read pin3
-    hal.gpio->write(pin2, 1);
-    hal.scheduler->delay(1);
-    //if pin3 is 1 increment counter
-    if (hal.gpio->read(pin3) == 1)
-	channel3_status++;
-
-    //if counter is 3 then we are in PPMSUM
-    if (channel3_status == 3)
+    switch (_rc_type) {
+    case SBUS:
+	g_is_ppmsum = 3;
+        _sbus = new SBUSClass(hal.uartD);
+        _sbus->begin();
+        break;
+    case PPMSUM:
 	g_is_ppmsum = 1;
-    else
+	attachPWMCaptureCallback(rxIntPPMSUM);
+	pwmInit();
+	break;
+    case PWM:
+    default:
 	g_is_ppmsum = 0;
-
-    //test for SBUS
-    uint8_t channel8_status = 0;
-        uint8_t pin7, pin8;
-        //input pin 2
-        pin7 = 14;
-        //input pin 3
-        pin8 = 15;
-
-        //set pin2 as output and pin 3 as input
-        hal.gpio->pinMode(pin7, OUTPUT);
-        hal.gpio->pinMode(pin8, INPUT);
-
-        //default pin3 to 0
-        hal.gpio->write(pin8, 0);
-        hal.scheduler->delay(1);
-
-        //write 1 to pin 2 and read pin3
-        hal.gpio->write(pin7, 1);
-        hal.scheduler->delay(1);
-        //if pin3 is 1 increment counter
-        if (hal.gpio->read(pin8) == 1)
-            channel8_status++;
-
-        //write 0 to pin 2 and read pin3
-        hal.gpio->write(pin7, 0);
-        hal.scheduler->delay(1);
-        //if pin3 is 0 increment counter
-        if (hal.gpio->read(pin8) == 0)
-            channel8_status++;
-
-        //write 1 to pin 2 and read pin3
-        hal.gpio->write(pin7, 1);
-        hal.scheduler->delay(1);
-        //if pin3 is 1 increment counter
-        if (hal.gpio->read(pin8) == 1)
-            channel8_status++;
-
-        //if counter is 3 then we are in SBUS
-        if (channel8_status == 3) {
-    	    g_is_ppmsum = 3; //SBUS detected
+        for (byte channel = 0; channel < 8; channel++) {
+    	pinData[channel].edge = FALLING_EDGE;
         }
-        hal.console->println("Init SBUS");
+        pwmInit();
+        break;
 
-        if (g_is_ppmsum == 3) {
-            hal.console->println("Init SBUS");
-
-            _sbus = new SBUSClass(hal.uartD);
-
-            _sbus->begin();
-
-        } else if (g_is_ppmsum == 1) {
-	    // Init Radio In
-	    hal.console->println("Init Default PPMSUM");
-	    attachPWMCaptureCallback(rxIntPPMSUM);
-
-	} else {//PPMSUM
-            for (byte channel = 0; channel < 8; channel++) {
-        	pinData[channel].edge = FALLING_EDGE;
-            }
-	    // Init Radio In
-	    hal.console->println("Init Default PWM");
-
-	}
-
-        if (g_is_ppmsum != 3) {
-            pwmInit();
-        }
+    }
 
     clear_overrides();
     }
@@ -306,3 +220,121 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
 	}
     }
 
+void VRBRAINRCInput::_detect_rc(){
+
+    /*try to detect correct RC type*/
+    _detected = false;
+    _rc_type = PWM;
+
+    //First try with SBUS
+    _sbus_dct();
+    if (_detected) {
+	hal.console->println("Init SBUS");
+	return;
+    }
+
+    //Then try with PPMSUM
+    _ppmsum_dct();
+    if (_detected) {
+	hal.console->println("Init PPMSUM");
+	return;
+    }
+
+    hal.console->println("Init PWM");
+    // Else we have standard PWM
+    _detected = true;
+    _rc_type = PWM;
+
+}
+
+bool VRBRAINRCInput::_sbus_dct(){
+
+    //begin serial6 and try to detect SBUS data
+    hal.uartD->begin(100000,1);
+
+    uint32_t timer = hal.scheduler->millis();
+
+    while (hal.uartD->available() == 0){
+      if (hal.scheduler->millis() - timer > 1000){
+        return false;
+      }
+    }
+/*
+    static byte buffer[25];
+    static byte buffer_index = 0;
+    uint8_t decoderErrorFrames = 0;
+
+    while (hal.uartD->available() || decoderErrorFrames < 3) {
+	byte rx = hal.uartD->read();
+	if (buffer_index == 0 && rx != 0x0f) {
+		//incorrect start byte, out of sync
+		decoderErrorFrames++;
+		continue;
+	}
+
+	buffer[buffer_index++] = rx;
+
+	if (buffer_index == 25) {
+		buffer_index = 0;
+		if (buffer[24] != 0x00) {
+			//incorrect end byte, out of sync
+			decoderErrorFrames++;
+			continue;
+		}
+		_rc_type = SBUS;
+		_detected = true;
+		return true;
+	}
+    }
+    return false;
+    */
+	_rc_type = SBUS;
+	_detected = true;
+	return true;
+}
+
+bool VRBRAINRCInput::_ppmsum_dct(){
+    /*initial check for pin2-pin3 bridge. If detected switch to PPMSUM  */
+    uint8_t channel3_status = 0;
+        uint8_t pin2, pin3;
+        //input pin 2
+        pin2 = 80;
+        //input pin 3
+        pin3 = 86;
+
+        //set pin2 as output and pin 3 as input
+        hal.gpio->pinMode(pin2, OUTPUT);
+        hal.gpio->pinMode(pin3, INPUT);
+
+        //default pin3 to 0
+        hal.gpio->write(pin3, 0);
+        hal.scheduler->delay(1);
+
+        //write 1 to pin 2 and read pin3
+        hal.gpio->write(pin2, 1);
+        hal.scheduler->delay(1);
+        //if pin3 is 1 increment counter
+        if (hal.gpio->read(pin3) == 1)
+    	channel3_status++;
+
+        //write 0 to pin 2 and read pin3
+        hal.gpio->write(pin2, 0);
+        hal.scheduler->delay(1);
+        //if pin3 is 0 increment counter
+        if (hal.gpio->read(pin3) == 0)
+    	channel3_status++;
+
+        //write 1 to pin 2 and read pin3
+        hal.gpio->write(pin2, 1);
+        hal.scheduler->delay(1);
+        //if pin3 is 1 increment counter
+        if (hal.gpio->read(pin3) == 1)
+    	channel3_status++;
+
+        if (channel3_status == 3) {
+            _detected = true;
+            _rc_type = PPMSUM;
+            return true;
+        }
+    return false;
+}
