@@ -29,20 +29,48 @@ void VRBRAINRCOutput::init(void* implspecific)
     out_ch4=36;  //Timer3 ch2
     out_ch5=46;  //Timer3 ch3
     out_ch6=45;  //Timer3 ch4
-    out_ch7=101; //Timer4 ch3
-    out_ch8=25;  //Timer4 ch4
 
-    if(g_is_ppmsum == 3) { //if we have SBUS enabled use INPUT1-4 as outputs
-	out_ch9=75;  //Timer1 ch1 PWM_IN_1
-	out_ch10=80; //Timer1 ch2 PWM_IN_2
-	out_ch11=86; //Timer1 ch3 PWM_IN_3
-	out_ch12=89; //Timer1 ch4 PWM_IN_4
-    }else if (g_is_ppmsum == 1) {  //if we have PPMSUM enabled use INPUT5-8 as outputs
-	out_ch9=12;  //Timer8 ch1 PWM_IN_5
-	out_ch10=13; //Timer8 ch2 PWM_IN_6
-	out_ch11=14; //Timer8 ch3 PWM_IN_7
-	out_ch12=15; //Timer8 ch4 PWM_IN_8
+    if(g_ext_mag_detect){
+	    if(g_is_ppmsum == 3) { //if we have SBUS enabled use INPUT1-4 as outputs
+		out_ch7=75;  //Timer1 ch1 PWM_IN_1
+		out_ch8=80; //Timer1 ch2 PWM_IN_2
+		out_ch9=86; //Timer1 ch3 PWM_IN_3
+		out_ch10=89; //Timer1 ch4 PWM_IN_4
+		out_ch11=200; //disabled
+		out_ch12=200;//disabled
+	    }else if (g_is_ppmsum == 1) {  //if we have PPMSUM enabled use INPUT5-8 as outputs
+		out_ch7=12;  //Timer8 ch1 PWM_IN_5
+		out_ch8=13; //Timer8 ch2 PWM_IN_6
+		out_ch9=14; //Timer8 ch3 PWM_IN_7
+		out_ch10=15; //Timer8 ch4 PWM_IN_8
+		out_ch11=200;//disabled
+		out_ch12=200;//disabled
+	    } else {
+		out_ch7=200;//disabled
+		out_ch8=200;//disabled
+		out_ch9=200;//disabled
+		out_ch10=200;//disabled
+		out_ch11=200;//disabled
+		out_ch12=200;//disabled
+	    }
+    } else {
+	    out_ch7=101; //Timer4 ch3
+	    out_ch8=25;  //Timer4 ch4
+	    if(g_is_ppmsum == 3) { //if we have SBUS enabled use INPUT1-4 as outputs
+		out_ch9=75;  //Timer1 ch1 PWM_IN_1
+		out_ch10=80; //Timer1 ch2 PWM_IN_2
+		out_ch11=86; //Timer1 ch3 PWM_IN_3
+		out_ch12=89; //Timer1 ch4 PWM_IN_4
+	    }else if (g_is_ppmsum == 1) {  //if we have PPMSUM enabled use INPUT5-8 as outputs
+		out_ch9=12;  //Timer8 ch1 PWM_IN_5
+		out_ch10=13; //Timer8 ch2 PWM_IN_6
+		out_ch11=14; //Timer8 ch3 PWM_IN_7
+		out_ch12=15; //Timer8 ch4 PWM_IN_8
+	    }
     }
+
+
+
     outPin[MOTORID1] = out_ch1;
     outPin[MOTORID2] = out_ch2;
     outPin[MOTORID3] = out_ch3;
@@ -146,8 +174,6 @@ void VRBRAINRCOutput::set_freq(uint32_t chmask, uint16_t freq_hz)
 	}
     }
 
-
-
 }
 
 uint16_t VRBRAINRCOutput::get_freq(uint8_t ch) {
@@ -196,19 +222,36 @@ void VRBRAINRCOutput::enable_ch(uint8_t ch)
 	case 3: (TIMER3->regs)->CCER |= (uint16_t)TIM_CCER_CC2E; break; // CH_4 : OC4B
 	case 4: (TIMER3->regs)->CCER |= (uint16_t)TIM_CCER_CC3E; break; // CH_5 : OC4A
 	case 5: (TIMER3->regs)->CCER |= (uint16_t)TIM_CCER_CC4E; break; // CH_6 : OC3C
-	case 6: (TIMER4->regs)->CCER |= (uint16_t)TIM_CCER_CC3E; break; // CH_7 : OC3B
-	case 7: (TIMER4->regs)->CCER |= (uint16_t)TIM_CCER_CC4E; break; // CH_8 : OC3A
-	if(g_is_ppmsum == 1) {
-	    case 8: (TIMER8->regs)->CCER |= (uint16_t)TIM_CCER_CC1E; break; // CH_9 : OC3B
-	    case 9: (TIMER8->regs)->CCER |= (uint16_t)TIM_CCER_CC2E; break; // CH_10 : OC3A
-	    case 10: (TIMER8->regs)->CCER |= (uint16_t)~TIM_CCER_CC3E; break; // CH_11 : OC5B
-	    case 11: (TIMER8->regs)->CCER |= (uint16_t)~TIM_CCER_CC4E; break; // CH_12 : OC5C
-	} else if (g_is_ppmsum == 3) {
-	    case 8: (TIMER1->regs)->CCER |= (uint16_t)TIM_CCER_CC1E; break; // CH_7 : OC3B
-	    case 9: (TIMER1->regs)->CCER |= (uint16_t)TIM_CCER_CC2E; break; // CH_8 : OC3A
-	    case 10: (TIMER1->regs)->CCER |= (uint16_t)~TIM_CCER_CC3E; break; // CH_10 : OC5B
-	    case 11: (TIMER1->regs)->CCER |= (uint16_t)~TIM_CCER_CC4E; break; // CH_11 : OC5C
-	}
+	case 6:
+	    if(_num_motors > 6) {
+		(PIN_MAP[out_ch7].timer_device->regs)->CCER |= (uint16_t)TIM_CCER_CC3E;
+	    }
+	    break; // CH_7 : OC3B
+	case 7:
+	    if(_num_motors > 6) {
+		(PIN_MAP[out_ch8].timer_device->regs)->CCER |= (uint16_t)TIM_CCER_CC4E;
+	    }
+	    break; // CH_8 : OC3A
+	case 8:
+	    if(_num_motors > 8) {
+	    (PIN_MAP[out_ch9].timer_device->regs)->CCER |= (uint16_t)TIM_CCER_CC1E;
+	    }
+	    break; // CH_9 : OC3B
+	case 9:
+	    if(_num_motors > 8) {
+		(PIN_MAP[out_ch10].timer_device->regs)->CCER |= (uint16_t)TIM_CCER_CC2E;
+	    }
+	    break; // CH_10 : OC3A
+	case 10:
+	    if(_num_motors > 10) {
+		(PIN_MAP[out_ch11].timer_device->regs)->CCER |= (uint16_t)TIM_CCER_CC3E;
+	    }
+	    break; // CH_11 : OC5B
+	case 11:
+	    if(_num_motors > 10) {
+	    (PIN_MAP[out_ch12].timer_device->regs)->CCER |= (uint16_t)TIM_CCER_CC4E;
+	    }
+	    break; // CH_12 : OC5C
 	}
 }
 
@@ -222,19 +265,36 @@ void VRBRAINRCOutput::disable_ch(uint8_t ch)
 	case 3: (TIMER3->regs)->CCER &= (uint16_t)~TIM_CCER_CC2E; break; // CH_4 : OC4B
 	case 4: (TIMER3->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E; break; // CH_5 : OC4A
 	case 5: (TIMER3->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_6 : OC3C
-	case 6: (TIMER4->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E; break; // CH_7 : OC3B
-	case 7: (TIMER4->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_8 : OC3A
-	if(g_is_ppmsum == 1) {
-	    case 8: (TIMER8->regs)->CCER &= (uint16_t)TIM_CCER_CC1E; break; // CH_9 : OC3B
-	    case 9: (TIMER8->regs)->CCER &= (uint16_t)TIM_CCER_CC2E; break; // CH_10 : OC3A
-	    case 10: (TIMER8->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E; break; // CH_11 : OC5B
-	    case 11: (TIMER8->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_12 : OC5C
-	} else if (g_is_ppmsum == 3) {
-	    case 8: (TIMER1->regs)->CCER &= (uint16_t)TIM_CCER_CC1E; break; // CH_7 : OC3B
-	    case 9: (TIMER1->regs)->CCER &= (uint16_t)TIM_CCER_CC2E; break; // CH_8 : OC3A
-	    case 10: (TIMER1->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E; break; // CH_10 : OC5B
-	    case 11: (TIMER1->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_11 : OC5C
-	}
+	case 6:
+	    if(_num_motors > 6) {
+		(PIN_MAP[out_ch7].timer_device->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E;
+	    }
+	    break; // CH_7 : OC3B
+	case 7:
+	    if(_num_motors > 6) {
+		(PIN_MAP[out_ch8].timer_device->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E;
+	    }
+	    break; // CH_8 : OC3A
+	case 8:
+	    if(_num_motors > 8) {
+		(PIN_MAP[out_ch9].timer_device->regs)->CCER &= (uint16_t)~TIM_CCER_CC1E;
+	    }
+	    break; // CH_9 : OC3B
+	case 9:
+	    if(_num_motors > 8) {
+		(PIN_MAP[out_ch10].timer_device->regs)->CCER &= (uint16_t)~TIM_CCER_CC2E;
+	    }
+	    break; // CH_10 : OC3A
+	case 10:
+	    if(_num_motors > 10) {
+		(PIN_MAP[out_ch11].timer_device->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E;
+	    }
+	    break; // CH_11 : OC5B
+	case 11:
+	    if(_num_motors > 10) {
+		(PIN_MAP[out_ch12].timer_device->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E;
+	    }
+	    break; // CH_12 : OC5C
 	}
 }
 
