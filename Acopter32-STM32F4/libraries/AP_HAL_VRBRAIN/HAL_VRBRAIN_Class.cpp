@@ -23,7 +23,7 @@ using namespace VRBRAIN;
 
 
 // XXX make sure these are assigned correctly
-static VRBRAINUARTDriver uartADriver(_USART1,0);
+static VRBRAINUARTDriver uartADriver(_USART1,1);
 static VRBRAINUARTDriver uartBDriver(_USART2,0);
 static VRBRAINUARTDriver uartCDriver(_USART3,0);
 static VRBRAINUARTDriver uartDDriver(_USART6,0);

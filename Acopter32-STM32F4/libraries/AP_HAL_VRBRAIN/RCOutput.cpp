@@ -225,26 +225,44 @@ void VRBRAINRCOutput::enable_ch(uint8_t ch)
 	case 5: (TIMER3->regs)->CCER |= (uint16_t)TIM_CCER_CC4E; break; // CH_6 : OC3C
 	case 6:
 	    if(_num_motors > 6) {
-		dev = PIN_MAP[out_ch7].timer_device;
-		(dev->regs)->CCER |= (uint16_t)TIM_CCER_CC3E;
-	    }
-	    break; // CH_7 : OC3B
+	   		dev = PIN_MAP[out_ch7].timer_device;
+	   		if(g_ext_mag_detect){
+	   		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC1E;
+	   		} else {
+	   		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC3E;
+	   		}
+	   	    }
+	   	    break; // CH_7 : OC3B
 	case 7:
 	    if(_num_motors > 6) {
 		dev = PIN_MAP[out_ch8].timer_device;
-		(dev->regs)->CCER |= (uint16_t)TIM_CCER_CC4E;
+		if(g_ext_mag_detect){
+		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC2E;
+		} else {
+		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC4E;
+		}
 	    }
 	    break; // CH_8 : OC3A
 	case 8:
 	    if(_num_motors > 8) {
 		dev = PIN_MAP[out_ch9].timer_device;
-		(dev->regs)->CCER |= (uint16_t)TIM_CCER_CC1E;
+		if(g_ext_mag_detect){
+		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC3E;
+		} else {
+		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC1E;
+		}
+
 	    }
 	    break; // CH_9 : OC3B
 	case 9:
 	    if(_num_motors > 8) {
 		dev = PIN_MAP[out_ch10].timer_device;
-		(dev->regs)->CCER |= (uint16_t)TIM_CCER_CC2E;
+		if(g_ext_mag_detect){
+		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC4E;
+		} else {
+		    (dev->regs)->CCER |= (uint16_t)TIM_CCER_CC2E;
+		}
+
 	    }
 	    break; // CH_10 : OC3A
 	case 10:
@@ -306,7 +324,7 @@ void VRBRAINRCOutput::disable_ch(uint8_t ch)
 	    break; // CH_9 : OC3B
 	case 9:
 	    if(_num_motors > 8) {
-		dev = PIN_MAP[out_ch10].timer_device
+		dev = PIN_MAP[out_ch10].timer_device;
 		if(g_ext_mag_detect){
 		    (dev->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E;
 		} else {
@@ -317,13 +335,13 @@ void VRBRAINRCOutput::disable_ch(uint8_t ch)
 	    break; // CH_10 : OC3A
 	case 10:
 	    if(_num_motors > 10) {
-		dev = PIN_MAP[out_ch11].timer_device
+		dev = PIN_MAP[out_ch11].timer_device;
 		(dev->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E;
 	    }
 	    break; // CH_11 : OC5B
 	case 11:
 	    if(_num_motors > 10) {
-		dev = PIN_MAP[out_ch12].timer_device
+		dev = PIN_MAP[out_ch12].timer_device;
 		(dev->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E;
 	    }
 	    break; // CH_12 : OC5C
