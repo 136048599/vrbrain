@@ -198,8 +198,17 @@ void VRBRAINRCOutput::enable_ch(uint8_t ch)
 	case 5: (TIMER3->regs)->CCER |= (uint16_t)TIM_CCER_CC4E; break; // CH_6 : OC3C
 	case 6: (TIMER4->regs)->CCER |= (uint16_t)TIM_CCER_CC3E; break; // CH_7 : OC3B
 	case 7: (TIMER4->regs)->CCER |= (uint16_t)TIM_CCER_CC4E; break; // CH_8 : OC3A
-	//case 9: (TIMER8->regs)->CCER &= (uint16_t)~TIM_CCER_CC1E; break; // CH_10 : OC5B
-	//case 10: (TIMER8->regs)->CCER &= (uint16_t)~TIM_CCER_CC1E; break; // CH_11 : OC5C
+	if(g_is_ppmsum == 1) {
+	    case 8: (TIMER8->regs)->CCER |= (uint16_t)TIM_CCER_CC1E; break; // CH_9 : OC3B
+	    case 9: (TIMER8->regs)->CCER |= (uint16_t)TIM_CCER_CC2E; break; // CH_10 : OC3A
+	    case 10: (TIMER8->regs)->CCER |= (uint16_t)~TIM_CCER_CC3E; break; // CH_11 : OC5B
+	    case 11: (TIMER8->regs)->CCER |= (uint16_t)~TIM_CCER_CC4E; break; // CH_12 : OC5C
+	} else if (g_is_ppmsum == 3) {
+	    case 8: (TIMER1->regs)->CCER |= (uint16_t)TIM_CCER_CC1E; break; // CH_7 : OC3B
+	    case 9: (TIMER1->regs)->CCER |= (uint16_t)TIM_CCER_CC2E; break; // CH_8 : OC3A
+	    case 10: (TIMER1->regs)->CCER |= (uint16_t)~TIM_CCER_CC3E; break; // CH_10 : OC5B
+	    case 11: (TIMER1->regs)->CCER |= (uint16_t)~TIM_CCER_CC4E; break; // CH_11 : OC5C
+	}
 	}
 }
 
@@ -215,6 +224,17 @@ void VRBRAINRCOutput::disable_ch(uint8_t ch)
 	case 5: (TIMER3->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_6 : OC3C
 	case 6: (TIMER4->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E; break; // CH_7 : OC3B
 	case 7: (TIMER4->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_8 : OC3A
+	if(g_is_ppmsum == 1) {
+	    case 8: (TIMER8->regs)->CCER &= (uint16_t)TIM_CCER_CC1E; break; // CH_9 : OC3B
+	    case 9: (TIMER8->regs)->CCER &= (uint16_t)TIM_CCER_CC2E; break; // CH_10 : OC3A
+	    case 10: (TIMER8->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E; break; // CH_11 : OC5B
+	    case 11: (TIMER8->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_12 : OC5C
+	} else if (g_is_ppmsum == 3) {
+	    case 8: (TIMER1->regs)->CCER &= (uint16_t)TIM_CCER_CC1E; break; // CH_7 : OC3B
+	    case 9: (TIMER1->regs)->CCER &= (uint16_t)TIM_CCER_CC2E; break; // CH_8 : OC3A
+	    case 10: (TIMER1->regs)->CCER &= (uint16_t)~TIM_CCER_CC3E; break; // CH_10 : OC5B
+	    case 11: (TIMER1->regs)->CCER &= (uint16_t)~TIM_CCER_CC4E; break; // CH_11 : OC5C
+	}
 	}
 }
 
