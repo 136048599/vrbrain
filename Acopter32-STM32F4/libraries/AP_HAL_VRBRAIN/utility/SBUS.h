@@ -52,6 +52,7 @@ class SBUSClass {
 		uint64_t _goodFrames;
 		uint64_t _lostFrames;
 		uint64_t _decoderErrorFrames;
+		uint32_t _last_update;
 };
 
 

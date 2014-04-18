@@ -47,6 +47,8 @@ void SBUSClass::begin() {
 	for (byte i = 0; i<18; i++) {
 		_channels[i]      = 0;
 	}
+	_failsafe = 0;
+	_last_update = 0;
 
 	_serial->begin(100000,1);
 
@@ -105,6 +107,8 @@ void SBUSClass::_process() {
 			if ((buffer[23] >> 2) & 0x0001) {
 				_lostFrames++;
 			}
+
+			_last_update = hal.scheduler->millis();
 		}
 	}
 }
@@ -113,6 +117,9 @@ uint16_t SBUSClass::getChannel(int channel) {
 	if (channel < 0 or channel > 17) {
 		return 0;
 	} else {
+	    if(hal.scheduler->millis() - _last_update > 500) {
+		_failsafe = 1;
+	    }
 	    if (channel == 2 && _failsafe) { //hardcoded failsafe action if RX is in failsafe, put throttle to 900
 		return 900;
 	    } else {

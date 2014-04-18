@@ -32,6 +32,7 @@ public:
     };
 private:
     static void rxIntPPMSUM(uint8_t state, uint16_t value);
+    static void rxIntPWM(uint8_t chan, uint16_t value);
     void InitDefaultPPM(char board);
     void _detect_rc(void);
     bool _sbus_dct();
@@ -53,7 +54,7 @@ private:
     uint16_t _override[8];
 
     /* private variables to communicate with input capture isr */
-    static volatile uint16_t _pulse_capt[VRBRAIN_RC_INPUT_NUM_CHANNELS];
+    static volatile uint16_t _channel[VRBRAIN_RC_INPUT_NUM_CHANNELS];
     static volatile uint32_t _last_pulse[VRBRAIN_RC_INPUT_NUM_CHANNELS];
     static volatile uint8_t  _valid_channels;
 

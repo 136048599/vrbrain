@@ -104,7 +104,7 @@ void VRBRAINRCOutput::init(void* implspecific)
 
 	    _num_motors = 10;
 
-    } else {
+    } else { //no external mag detected so we use ch7 and ch8 as normal outputs
 
 	outPin[MOTORID7] = out_ch7;
 	outPin[MOTORID8] = out_ch8;

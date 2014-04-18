@@ -29,7 +29,7 @@ extern const AP_HAL::HAL& hal;
 //SBUSClass VRBRAINRCInput::_sbus(hal.uartC);
 
 /* private variables to communicate with input capture isr */
-volatile uint16_t VRBRAINRCInput::_pulse_capt[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
+volatile uint16_t VRBRAINRCInput::_channel[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
 volatile uint32_t VRBRAINRCInput::_last_pulse[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
 volatile uint8_t  VRBRAINRCInput::_valid_channels = 0;
 
@@ -85,8 +85,9 @@ void VRBRAINRCInput::init(void* machtnichts)
     default:
 	g_is_ppmsum = 0;
         for (byte channel = 0; channel < 8; channel++) {
-    	pinData[channel].edge = FALLING_EDGE;
+            pinData[channel].edge = FALLING_EDGE;
         }
+        attachPWMCaptureCallback(rxIntPWM);
         pwmInit();
         break;
 
@@ -120,7 +121,7 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
 	}
     else
 	{
-	data = _pulse_capt[ch];
+	data = _channel[ch];
 	pulse = _last_pulse[ch];
 	}
     interrupts();
@@ -128,7 +129,7 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
     /* Check for override */
     uint16_t over = _override[ch];
 
-    if((g_is_ppmsum) && (ch == 2) && (systick_uptime() - pulse > 50))
+    if((g_is_ppmsum == 1) && (ch == 2) && (systick_uptime() - pulse > 50))
 	data = 900;
 
     return (over == 0) ? data : over;
@@ -139,21 +140,30 @@ uint8_t VRBRAINRCInput::read(uint16_t* periods, uint8_t len)
     noInterrupts();
     for (uint8_t i = 0; i < len; i++)
 	{
-	if (g_is_ppmsum == 3) {
+	if (g_is_ppmsum == 3) { //SBUS
 	    periods[i] = _sbus->getChannel(i);
 
-	} else if (g_is_ppmsum == 0) {
+	} else if (g_is_ppmsum == 0) { //PWM
+	    if(i < 5 && (hal.scheduler->millis() - _last_pulse[i] > 500)) {
+		periods[2] = 900;
+		_valid_channels = 0;
+	    } else {
 		periods[i] = pwmRead(i);
+		_valid_channels = 1;
+	    }
 
-	} else {
-	    if ( i == 2 && (systick_uptime() - _last_pulse[i] > 50) )
-		    periods[i] = 900;
-		else
-		    periods[i] = _pulse_capt[i];
+	} else { //PPMSUM
+	    if ( i == 2 && (systick_uptime() - _last_pulse[i] > 500) ) {
+		periods[i] = 900;
+		_valid_channels = 0;
+	    } else {
+		periods[i] = _channel[i];
+		_valid_channels = 1;
+	    }
 	}
 
-	    if (_override[i] != 0)
-		periods[i] = _override[i];
+	if (_override[i] != 0)
+	    periods[i] = _override[i];
 	}
     interrupts();
 
@@ -209,8 +219,8 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
     else
 	{
         if (channel_ctr < VRBRAIN_RC_INPUT_NUM_CHANNELS) {
-            _pulse_capt[channel_ctr] = value;
-            _last_pulse[channel_ctr] = systick_uptime();
+            _channel[channel_ctr] = value;
+            _last_pulse[channel_ctr] = hal.scheduler->millis();;
             channel_ctr++;
             if (channel_ctr == VRBRAIN_RC_INPUT_NUM_CHANNELS) {
                 _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
@@ -218,6 +228,14 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
         }
 
 	}
+    }
+
+void VRBRAINRCInput::rxIntPWM(uint8_t channel, uint16_t value)
+    {
+    static uint8_t  channel_ctr;
+    static uint32_t channel_time[VRBRAIN_RC_INPUT_NUM_CHANNELS];
+    _channel[channel] = value;
+    _last_pulse[channel] = hal.scheduler->millis();
     }
 
 void VRBRAINRCInput::_detect_rc(){
