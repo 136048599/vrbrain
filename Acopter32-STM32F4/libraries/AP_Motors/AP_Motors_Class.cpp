@@ -58,6 +58,13 @@ const AP_Param::GroupInfo AP_Motors::var_info[] PROGMEM = {
     // @User: Standard
     AP_GROUPINFO("SPIN_ARMED", 5, AP_Motors, _spin_when_armed, AP_MOTORS_SPIN_WHEN_ARMED),
 
+    // @Param: TB_RATIO
+    // @DisplayName: Motors always spin when armed
+    // @Description: Controls whether motors always spin when armed (must be below THR_MIN)
+    // @Values: 0:Do Not Spin,70:VerySlow,100:Slow,130:Medium,150:Fast
+    // @User: Standard
+    AP_GROUPINFO("TB_RATIO", 6, AP_Motors, _tb_ratio, AP_MOTORS_TB_RATIO),
+
     AP_GROUPEND
 };
 
