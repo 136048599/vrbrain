@@ -389,12 +389,12 @@ public:
     RC_Channel_aux          rc_6;
     RC_Channel_aux          rc_7;
     RC_Channel_aux          rc_8;
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     RC_Channel_aux          rc_9;
 #endif
     RC_Channel_aux          rc_10;
     RC_Channel_aux          rc_11;
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     RC_Channel_aux          rc_12;
 #endif
 
@@ -451,12 +451,12 @@ public:
         rc_6                (CH_6),
         rc_7                (CH_7),
         rc_8                (CH_8),
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
         rc_9                (CH_9),
 #endif
         rc_10               (CH_10),
         rc_11               (CH_11),
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
         rc_12               (CH_12),
 #endif
 
