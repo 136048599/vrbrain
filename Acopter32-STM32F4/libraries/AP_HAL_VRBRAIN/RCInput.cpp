@@ -106,6 +106,12 @@ uint8_t VRBRAINRCInput::valid_channels()
 	return _valid_channels;
 
     }
+/* constrain captured pulse to be between min and max pulsewidth. */
+static inline uint16_t constrain_pulse(uint16_t p) {
+    if (p > RC_INPUT_MAX_PULSEWIDTH) return RC_INPUT_MAX_PULSEWIDTH;
+    if (p < RC_INPUT_MIN_PULSEWIDTH) return RC_INPUT_MIN_PULSEWIDTH;
+    return p;
+}
 
 uint16_t VRBRAINRCInput::read(uint8_t ch)
     {
@@ -114,7 +120,7 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
 
     noInterrupts();
     if (g_is_ppmsum == 3) {
-	_sbus->getChannel(ch);
+	data = _sbus->getChannel(ch);
 
     }else if (g_is_ppmsum == 0)
 	{
@@ -144,23 +150,23 @@ uint8_t VRBRAINRCInput::read(uint16_t* periods, uint8_t len)
     for (uint8_t i = 0; i < len; i++)
 	{
 	if (g_is_ppmsum == 3) { //SBUS
-	    periods[i] = _sbus->getChannel(i);
+	    periods[i] = constrain_pulse(_sbus->getChannel(i));
 
 	} else if (g_is_ppmsum == 0) { //PWM
 	    if(i < 5 && (hal.scheduler->millis() - _last_pulse[i] > 500)) {
 		periods[2] = 900;
 		_valid_channels = 0;
 	    } else {
-		periods[i] = pwmRead(i);
+		periods[i] = constrain_pulse(pwmRead(i));
 		_valid_channels = 1;
 	    }
 
 	} else { //PPMSUM
-	    if ( i == 2 && (systick_uptime() - _last_pulse[i] > 500) ) {
+	    if ( i == 2 && (hal.scheduler->millis() - _last_pulse[i] > 500) ) {
 		periods[i] = 900;
 		_valid_channels = 0;
 	    } else {
-		periods[i] = _channel[i];
+		periods[i] = constrain_pulse(_channel[i]);
 		_valid_channels = 1;
 	    }
 	}
@@ -201,18 +207,11 @@ void VRBRAINRCInput::clear_overrides()
     }
     }
 
-/* constrain captured pulse to be between min and max pulsewidth. */
-static inline uint16_t constrain_pulse(uint16_t p) {
-    if (p > RC_INPUT_MAX_PULSEWIDTH) return RC_INPUT_MAX_PULSEWIDTH;
-    if (p < RC_INPUT_MIN_PULSEWIDTH) return RC_INPUT_MIN_PULSEWIDTH;
-    return p;
-}
-
 void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
     {
     static uint8_t  channel_ctr;
 
-    if (value >= 4000) // Frame synchronization
+    if (value > 4000) // Frame synchronization
 	{
 	    if( channel_ctr >= VRBRAIN_RC_INPUT_MIN_CHANNELS ) {
 		_valid_channels = channel_ctr;
@@ -235,8 +234,6 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
 
 void VRBRAINRCInput::rxIntPWM(uint8_t channel, uint16_t value)
     {
-    static uint8_t  channel_ctr;
-    static uint32_t channel_time[VRBRAIN_RC_INPUT_NUM_CHANNELS];
     _channel[channel] = value;
     _last_pulse[channel] = hal.scheduler->millis();
     }

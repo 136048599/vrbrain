@@ -237,13 +237,14 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 	    input->last_pulse = systick_uptime();
 	    input->rise = val;
 
-	    if (input->rise > last_val)
+	    if (input->rise < last_val)
 		{
-		time_off = input->rise - last_val;
+
+		time_off = input->rise + 0xFFFF - last_val;
 		}
 	    else
 		{
-		time_off = ((0xFFFF - last_val) + input->rise);
+		time_off = input->rise - last_val;
 		}
 
 	    last_val = val;
@@ -296,10 +297,10 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 		else
 		    {
 		    input->fall = val;
-		    if (input->fall > input->rise)
-			time_on = (input->fall - input->rise);
+		    if (input->fall < input->rise)
+			time_on = input->fall + 0xFFFF - input->rise ;
 		    else
-			time_on = ((0xFFFF - input->rise) + input->fall);
+			time_on = (input->fall - input->rise);
 
 		    if ((time_on >= MINONWIDTH) && (time_on <= MAXONWIDTH))
 			{
