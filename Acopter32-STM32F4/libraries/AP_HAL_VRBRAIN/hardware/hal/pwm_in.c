@@ -224,7 +224,7 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 
     // static uint32_t throttle_timer = 0;
 
-    if (g_is_ppmsum > 0)
+    if (g_is_ppmsum == 1)
 	{
 	struct TIM_Channel channel = Channels[0];
 	struct PWM_State *input = &Inputs[0];
@@ -451,7 +451,7 @@ void pwmInit()
 uint16_t pwmRead(uint8_t channel)
     {
     if(channel == 2) {
-	if(systick_uptime() - Inputs[channel].last_pulse > 50) {
+	if(systick_uptime() - Inputs[channel].last_pulse > 100) {
 	    return 900;
 	}
     }

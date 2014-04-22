@@ -132,7 +132,7 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
     /* Check for override */
     uint16_t over = _override[ch];
 
-    if((g_is_ppmsum == 1) && (ch == 2) && (systick_uptime() - pulse > 50))
+    if((g_is_ppmsum == 1) && (ch == 2) && (systick_uptime() - pulse > 100))
 	data = 900;
 
     return (over == 0) ? data : over;
