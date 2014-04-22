@@ -936,6 +936,7 @@ static void do_roi(struct Location *r_loc)
         yaw_look_at_WP = pv_location_to_vector(*roi_loc);
         set_yaw_mode(YAW_LOOK_AT_LOCATION);
     }
+    roi_loc->alt = 0;
     // send the command to the camera mount
     camera_mount.set_roi_cmd(roi_loc);
     
