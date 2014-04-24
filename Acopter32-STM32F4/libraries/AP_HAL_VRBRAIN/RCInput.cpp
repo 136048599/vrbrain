@@ -28,8 +28,6 @@ extern const AP_HAL::HAL& hal;
 #define MINCHECK 900
 #define MAXCHECK 2100
 
-//SBUSClass VRBRAINRCInput::_sbus(hal.uartC);
-
 /* private variables to communicate with input capture isr */
 volatile uint16_t VRBRAINRCInput::_channel[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
 volatile uint32_t VRBRAINRCInput::_last_pulse[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
@@ -182,7 +180,7 @@ uint8_t VRBRAINRCInput::read(uint16_t* periods, uint8_t len)
 bool VRBRAINRCInput::set_overrides(int16_t *overrides, uint8_t len)
     {
     bool res = false;
-    for (int i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++) {
         res |= set_override(i, overrides[i]);
     }
     return res;
@@ -202,8 +200,8 @@ bool VRBRAINRCInput::set_override(uint8_t channel, int16_t override)
 
 void VRBRAINRCInput::clear_overrides()
     {
-    for (int i = 0; i < VRBRAIN_RC_INPUT_NUM_CHANNELS; i++) {
-	set_override(i, 0);
+    for (uint8_t i = 0; i < VRBRAIN_RC_INPUT_NUM_CHANNELS; i++) {
+	_override[i] = 0;
     }
     }
 
@@ -236,6 +234,7 @@ void VRBRAINRCInput::rxIntPWM(uint8_t channel, uint16_t value)
     {
     _channel[channel] = value;
     _last_pulse[channel] = hal.scheduler->millis();
+    _valid_channels = 8;
     }
 
 void VRBRAINRCInput::_detect_rc(){
