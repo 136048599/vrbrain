@@ -1,6 +1,6 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduCopter V3.2-dev"
+#define THISFIRMWARE "ArduCopter V3.2-XTRACE"
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,42 +27,45 @@
  *
  *  Special Thanks to contributors (in alphabetical order by first name):
  *
- *  Adam M Rivera		:Auto Compass Declination
- *  Amilcar Lucas		:Camera mount library
- *  Andrew Tridgell		:General development, Mavlink Support
- *  Angel Fernandez		:Alpha testing
+ *  Adam M Rivera       :Auto Compass Declination
+ *  Amilcar Lucas       :Camera mount library
+ *  Andrew Tridgell     :General development, Mavlink Support
+ *  Angel Fernandez     :Alpha testing
  *  AndreasAntonopoulous:GeoFence
  *  Arthur Benemann     :DroidPlanner GCS
  *  Benjamin Pelletier  :Libraries
  *  Bill King           :Single Copter
- *  Christof Schmid		:Alpha testing
+ *  Christof Schmid     :Alpha testing
  *  Craig Elder         :Release Management, Support
  *  Dani Saez           :V Octo Support
- *  Doug Weibel			:DCM, Libraries, Control law advice
- *  Gregory Fletcher	:Camera mount orientation math
- *  Guntars				:Arming safety suggestion
- *  HappyKillmore		:Mavlink GCS
+ *  Doug Weibel	        :DCM, Libraries, Control law advice
+ *  Emile Castelnuovo   :VRBrain port, bug fixes
+ *  Gregory Fletcher    :Camera mount orientation math
+ *  Guntars             :Arming safety suggestion
+ *  HappyKillmore       :Mavlink GCS
  *  Hein Hollander      :Octo Support, Heli Testing
  *  Igor van Airde      :Control Law optimization
- *  Jack Dunkle			:Alpha testing
- *  James Goppert		:Mavlink Support
- *  Jani Hiriven		:Testing feedback
+ *  Jack Dunkle         :Alpha testing
+ *  James Goppert       :Mavlink Support
+ *  Jani Hiriven        :Testing feedback
  *  Jean-Louis Naudin   :Auto Landing
  *  John Arne Birkeland	:PPM Encoder
- *  Jose Julio			:Stabilization Control laws, MPU6k driver
+ *  Jose Julio          :Stabilization Control laws, MPU6k driver
+ *  Julien Dubois       :Hybrid flight mode
  *  Julian Oes          :Pixhawk
  *  Jonathan Challinger :Inertial Navigation, CompassMot, Spin-When-Armed
  *  Kevin Hester        :Andropilot GCS
- *  Max Levine			:Tri Support, Graphics
- *  Leonard Hall 		:Flight Dynamics, Throttle, Loiter and Navigation Controllers
- *  Marco Robustini		:Lead tester
- *  Michael Oborne		:Mission Planner GCS
- *  Mike Smith			:Pixhawk driver, coding support
+ *  Max Levine          :Tri Support, Graphics
+ *  Leonard Hall        :Flight Dynamics, Throttle, Loiter and Navigation Controllers
+ *  Marco Robustini     :Lead tester
+ *  Michael Oborne      :Mission Planner GCS
+ *  Mike Smith          :Pixhawk driver, coding support
  *  Olivier Adler       :PPM Encoder, piezo buzzer
- *  Pat Hickey          :Hardware Abstraaction Layer (HAL)
- *  Robert Lefebvre		:Heli Support, Copter LEDs
+ *  Pat Hickey          :Hardware Abstraction Layer (HAL)
+ *  Robert Lefebvre     :Heli Support, Copter LEDs
  *  Roberto Navoni      :Library testing, Porting to VRBrain
  *  Sandro Benigno      :Camera support, MinimOSD
+ *  Sandro Tognana      :Hybrid flight mode
  *  ..and many more.
  *
  *  Code commit statistics can be found here: https://github.com/diydrones/ardupilot/graphs/contributors
@@ -109,6 +112,7 @@
 #include <AP_AHRS.h>
 #include <AP_NavEKF.h>
 #include <AP_Mission.h>         // Mission command library
+#include <AP_Rally.h>           // Rally point library
 #include <AC_PID.h>             // PID library
 #include <AC_P.h>               // P library
 #include <AC_AttitudeControl.h> // Attitude control library
@@ -500,7 +504,6 @@ static int32_t home_bearing;
 static int32_t home_distance;
 // distance between plane and next waypoint in cm.
 static uint32_t wp_distance;
-static float lon_error, lat_error;      // Used to report how many cm we are from the next waypoint or loiter target position
 static uint8_t land_state;              // records state of land (flying to location, descending)
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -547,9 +550,8 @@ static int16_t desired_climb_rate;          // pilot desired climb rate - for lo
 static float acro_level_mix;                // scales back roll, pitch and yaw inversely proportional to input from pilot
 
 ////////////////////////////////////////////////////////////////////////////////
-// Circle Mode / Loiter control
+// Loiter control
 ////////////////////////////////////////////////////////////////////////////////
-static uint8_t circle_desired_rotations;        // how many times to circle as specified by mission command
 static uint16_t loiter_time_max;                // How long we should stay in Loiter Mode for mission scripting (time in seconds)
 static uint32_t loiter_time;                    // How long have we been loitering - The start time in millis
 
@@ -709,6 +711,13 @@ static AP_Mount camera_mount2(&current_loc, ahrs, 1);
 ////////////////////////////////////////////////////////////////////////////////
 #if AC_FENCE == ENABLED
 AC_Fence    fence(&inertial_nav);
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+// Rally library
+////////////////////////////////////////////////////////////////////////////////
+#if AC_RALLY == ENABLED
+AP_Rally rally(ahrs, MAX_RALLYPOINTS, RALLY_START_BYTE);
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1184,21 +1193,28 @@ static void update_optical_flow(void)
 // called at 50hz
 static void update_GPS(void)
 {
-    static uint32_t last_gps_reading;           // time of last gps message
+    static uint32_t last_gps_reading[GPS_MAX_INSTANCES];   // time of last gps message
     static uint8_t ground_start_count = 10;     // counter used to grab at least 10 reads before commiting the Home location
     bool report_gps_glitch;
+    bool gps_updated = false;
 
     gps.update();
 
     // logging and glitch protection run after every gps message
-    if (gps.last_message_time_ms() != last_gps_reading) {
-        last_gps_reading = gps.last_message_time_ms();
+    for (uint8_t i=0; i<gps.num_sensors(); i++) {
+        if (gps.last_message_time_ms(i) != last_gps_reading[i]) {
+            last_gps_reading[i] = gps.last_message_time_ms(i);
 
-        // log GPS message
-        if (g.log_bitmask & MASK_LOG_GPS) {
-            DataFlash.Log_Write_GPS(gps, current_loc.alt);
+            // log GPS message
+            if (g.log_bitmask & MASK_LOG_GPS) {
+                DataFlash.Log_Write_GPS(gps, i, current_loc.alt);
+            }
+
+            gps_updated = true;
         }
+    }
 
+    if (gps_updated) {
         // run glitch protection and update AP_Notify if home has been initialised
         if (ap.home_is_set) {
             gps_glitch.check_position();

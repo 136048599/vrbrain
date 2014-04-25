@@ -44,6 +44,8 @@ extern const AP_HAL::HAL& hal;
 #define UBLOX_HW_LOGGING 0
 #endif
 
+bool AP_GPS_UBLOX::logging_started = false;
+
 AP_GPS_UBLOX::AP_GPS_UBLOX(AP_GPS &_gps, AP_GPS::GPS_State &_state, AP_HAL::UARTDriver *_port) :
     AP_GPS_Backend(_gps, _state, _port),
     _step(0),
@@ -58,6 +60,7 @@ AP_GPS_UBLOX::AP_GPS_UBLOX(AP_GPS &_gps, AP_GPS::GPS_State &_state, AP_HAL::UART
     _disable_counter(0),
     next_fix(AP_GPS::NO_FIX),
     rate_update_step(0),
+    _last_5hz_time(0),
     _last_hw_status(0)
 {
     // stop any config strings that are pending

@@ -407,6 +407,23 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Values: 0:Very Soft, 25:Soft, 50:Medium, 75:Crisp, 100:Very Crisp
     GSCALAR(rc_feel_rp, "RC_FEEL_RP",  RC_FEEL_RP_VERY_CRISP),
 
+#if HYBRID_ENABLED == ENABLED
+    // @Param: HYBR_BRAKE_RATE
+    // @DisplayName: Hybrid braking rate
+    // @Description: hybrid flight mode's rotation rate during braking in deg/sec
+    // @Range: 4 12
+    // @User: Advanced
+    GSCALAR(hybrid_brake_rate, "HYBR_BRAKE_RATE",  HYBRID_BRAKE_RATE_DEFAULT),
+
+    // @Param: HYBR_BRAKE_ANGLE
+    // @DisplayName: Hybrid braking angle max
+    // @Description: hybrid flight mode's max lean angle during braking in centi-degrees
+    // @Units: Centi-degrees
+    // @Range: 2000 4500
+    // @User: Advanced
+    GSCALAR(hybrid_brake_angle_max, "HYBR_BRAKE_ANGLE",  HYBRID_BRAKE_ANGLE_DEFAULT),
+#endif
+
 #if FRAME_CONFIG ==     HELI_FRAME
     // @Group: HS1_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp
@@ -467,7 +484,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_8,    "RC8_", RC_Channel_aux),
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // @Group: RC9_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_9,                    "RC9_", RC_Channel_aux),
@@ -480,7 +497,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_11,                    "RC11_", RC_Channel_aux),
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // @Group: RC12_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_12,                   "RC12_", RC_Channel_aux),
@@ -969,6 +986,12 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Group: FENCE_
     // @Path: ../libraries/AC_Fence/AC_Fence.cpp
     GOBJECT(fence,      "FENCE_",   AC_Fence),
+#endif
+
+#if AC_RALLY == ENABLED
+    // @Group: RALLY_
+    // @Path: ../libraries/AP_Rally/AP_Rally.cpp
+    GOBJECT(rally,      "RALLY_",   AP_Rally),
 #endif
 
     // @Group: GPSGLITCH_
