@@ -100,12 +100,21 @@ void VRBRAINRCInput::init(void* machtnichts)
 
 uint8_t VRBRAINRCInput::valid_channels()
     {
-    if(g_is_ppmsum != 1 )
-	return 4;
-    else
 	return _valid_channels;
-
     }
+
+/* constrain captured pulse to be between min and max pulsewidth. */
+static inline uint16_t constrain_pulse(uint16_t p) {
+    if (p > RC_INPUT_MAX_PULSEWIDTH) return RC_INPUT_MAX_PULSEWIDTH;
+    if (p < RC_INPUT_MIN_PULSEWIDTH) return RC_INPUT_MIN_PULSEWIDTH;
+    return p;
+}
+/* constrain captured pulse to be between min and max pulsewidth. */
+static inline bool check_pulse(uint16_t p) {
+    if (p > RC_INPUT_MAX_PULSEWIDTH) return false;
+    if (p < RC_INPUT_MIN_PULSEWIDTH) return false;
+    return true;
+}
 
 uint16_t VRBRAINRCInput::read(uint8_t ch)
     {
@@ -114,26 +123,16 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
 
     noInterrupts();
     if (g_is_ppmsum == 3) {
-	_sbus->getChannel(ch);
+	data = _sbus->getChannel(ch);
+	_valid_channels = 14;
 
-    }else if (g_is_ppmsum == 0)
-	{
-	//data = rcPinValue[ch];
-	data = pwmRead(ch);
-	}
-    else
-	{
+    } else {
 	data = _channel[ch];
-	pulse = _last_pulse[ch];
-
     }
     interrupts();
 
     /* Check for override */
     uint16_t over = _override[ch];
-
-    if((g_is_ppmsum == 1) && (ch == 2) && (systick_uptime() - pulse > 50))
-	data = 900;
 
     return (over == 0) ? data : over;
     }
@@ -141,34 +140,21 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
 uint8_t VRBRAINRCInput::read(uint16_t* periods, uint8_t len)
     {
     noInterrupts();
-    for (uint8_t i = 0; i < len; i++)
-	{
+    for (uint8_t i = 0; i < len; i++) {
 	if (g_is_ppmsum == 3) { //SBUS
 	    periods[i] = _sbus->getChannel(i);
-
-	} else if (g_is_ppmsum == 0) { //PWM
-	    if(i < 5 && (hal.scheduler->millis() - _last_pulse[i] > 500)) {
-		periods[2] = 900;
-		_valid_channels = 0;
-	    } else {
-		periods[i] = pwmRead(i);
-		_valid_channels = 1;
-	    }
-
-	} else { //PPMSUM
-	    if ( i == 2 && (systick_uptime() - _last_pulse[i] > 500) ) {
-		periods[i] = 900;
-		_valid_channels = 0;
-	    } else {
-		periods[i] = _channel[i];
-		_valid_channels = 1;
-	    }
+	    _valid_channels = 14;
+	} else {
+	    periods[i] = _channel[i];
 	}
+    }
+    interrupts();
 
-	if (_override[i] != 0)
+    for (uint8_t i = 0; i < len; i++) {
+	if (_override[i] != 0) {
 	    periods[i] = _override[i];
 	}
-    interrupts();
+    }
 
     return len;
     }
@@ -176,7 +162,7 @@ uint8_t VRBRAINRCInput::read(uint16_t* periods, uint8_t len)
 bool VRBRAINRCInput::set_overrides(int16_t *overrides, uint8_t len)
     {
     bool res = false;
-    for (int i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++) {
         res |= set_override(i, overrides[i]);
     }
     return res;
@@ -196,23 +182,16 @@ bool VRBRAINRCInput::set_override(uint8_t channel, int16_t override)
 
 void VRBRAINRCInput::clear_overrides()
     {
-    for (int i = 0; i < VRBRAIN_RC_INPUT_NUM_CHANNELS; i++) {
-	set_override(i, 0);
+    for (uint8_t i = 0; i < VRBRAIN_RC_INPUT_NUM_CHANNELS; i++) {
+	_override[i] = 0;
     }
     }
-
-/* constrain captured pulse to be between min and max pulsewidth. */
-static inline uint16_t constrain_pulse(uint16_t p) {
-    if (p > RC_INPUT_MAX_PULSEWIDTH) return RC_INPUT_MAX_PULSEWIDTH;
-    if (p < RC_INPUT_MIN_PULSEWIDTH) return RC_INPUT_MIN_PULSEWIDTH;
-    return p;
-}
 
 void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
     {
     static uint8_t  channel_ctr;
 
-    if (value >= 4000) // Frame synchronization
+    if (value > 4000) // Frame synchronization
 	{
 	    if( channel_ctr >= VRBRAIN_RC_INPUT_MIN_CHANNELS ) {
 		_valid_channels = channel_ctr;
@@ -235,10 +214,9 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
 
 void VRBRAINRCInput::rxIntPWM(uint8_t channel, uint16_t value)
     {
-    static uint8_t  channel_ctr;
-    static uint32_t channel_time[VRBRAIN_RC_INPUT_NUM_CHANNELS];
     _channel[channel] = value;
     _last_pulse[channel] = hal.scheduler->millis();
+    _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
     }
 
 void VRBRAINRCInput::_detect_rc(){

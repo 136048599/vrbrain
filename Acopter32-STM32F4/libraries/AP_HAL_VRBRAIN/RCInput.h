@@ -53,7 +53,7 @@ private:
     static volatile uint8_t  _valid;
 
     /* override state */
-    uint16_t _override[8];
+    uint16_t _override[VRBRAIN_RC_INPUT_NUM_CHANNELS];
 
     /* private variables to communicate with input capture isr */
     static volatile uint16_t _channel[VRBRAIN_RC_INPUT_NUM_CHANNELS];

@@ -224,7 +224,7 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 
     // static uint32_t throttle_timer = 0;
 
-    if (g_is_ppmsum > 0)
+    if (g_is_ppmsum == 1)
 	{
 	struct TIM_Channel channel = Channels[0];
 	struct PWM_State *input = &Inputs[0];
@@ -234,16 +234,27 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 	    TIM_ClearITPendingBit(channel.tim, channel.tim_cc);
 	    val = TIM_GetCapture1(channel.tim);
 
+	    uint32 sr = tim->SR;
+	    uint32 overcapture_mask = (1 << (TIMER_SR_CC1OF_BIT + channel.tim_channel - 1));
+
+	    if (sr & overcapture_mask)
+	       {
+	   	// Hmmm, lost an interrupt somewhere? Ignore this sample
+	   	tim->SR &= ~overcapture_mask; // Clear overcapture flag
+	   	return;
+	       }
+
 	    input->last_pulse = systick_uptime();
 	    input->rise = val;
 
-	    if (input->rise > last_val)
+	    if (input->rise < last_val)
 		{
-		time_off = input->rise - last_val;
+
+		time_off = input->rise + 0xFFFF - last_val;
 		}
 	    else
 		{
-		time_off = ((0xFFFF - last_val) + input->rise);
+		time_off = input->rise - last_val;
 		}
 
 	    last_val = val;
@@ -296,10 +307,10 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 		else
 		    {
 		    input->fall = val;
-		    if (input->fall > input->rise)
-			time_on = (input->fall - input->rise);
+		    if (input->fall < input->rise)
+			time_on = input->fall + 0xFFFF - input->rise ;
 		    else
-			time_on = ((0xFFFF - input->rise) + input->fall);
+			time_on = (input->fall - input->rise);
 
 		    if ((time_on >= MINONWIDTH) && (time_on <= MAXONWIDTH))
 			{
@@ -308,7 +319,7 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 			}
 
 		    if (pwm_capture_callback) {
-			pwm_capture_callback(i, time_off >> 1);
+			pwm_capture_callback(i, time_on >> 1);
 		    }
 
 		    // switch state
@@ -319,6 +330,7 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 		    TIM_ICInit(channel.tim, &TIM_ICInitStructure);
 
 		    }
+		break;
 		}
 	    }
 	}
@@ -418,7 +430,7 @@ static void pwmInitializeInput()
 
 	// PWM input capture ************************************************************/
 	TIM_ICInitStructure.TIM_Channel = channel.tim_channel;
-	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Falling;
 	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
 	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
 	TIM_ICInitStructure.TIM_ICFilter = 0x0;
@@ -451,7 +463,7 @@ void pwmInit()
 uint16_t pwmRead(uint8_t channel)
     {
     if(channel == 2) {
-	if(systick_uptime() - Inputs[channel].last_pulse > 50) {
+	if(systick_uptime() - Inputs[channel].last_pulse > 100) {
 	    return 900;
 	}
     }
