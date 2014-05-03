@@ -639,6 +639,7 @@ static uint32_t loiter_time;
 ////////////////////////////////////////////////////////////////////////////////
 // Hybrid Mode : ST-JD
 ////////////////////////////////////////////////////////////////////////////////
+#define LOITER_MAN_MIX_TIMER			50			// ST-JD : set it from 100 to 200, the number of centiseconds loiter and manual commands are mixed to make a smooth transition.
 static uint8_t hybrid_mode_roll;		// 1=alt_hold; 2=brake 3=loiter
 static uint8_t hybrid_mode_pitch;		// 1=alt_hold; 2=brake 3=loiter
 static int16_t brake_roll = 0,brake_pitch = 0; // 
@@ -648,8 +649,11 @@ static int16_t wind_offset_roll,wind_offset_pitch;	// ST-JD : wind offsets for p
 static int16_t timeout_roll, timeout_pitch; 	// seconds - time allowed for the braking to complete, this timeout will be updated at half-braking
 static bool timeout_roll_updated, timeout_pitch_updated; 	// Allow the timeout to be updated only once per braking.
 static int16_t brake_max_roll, brake_max_pitch; 	         // used to detect half braking
+static int16_t loiter_roll,loiter_pitch;					// ST: store pitch/roll at loiter exit for loiter to manual transition
 static int16_t loiter_stab_timer;		// loiter stabilization timer: we read pid's I terms in wind_comp only after this time from loiter start
 static float brake_loiter_mix;		    // varies from 0 to 1, allows a smooth loiter engage
+static float loiter_man_mix;			// ST: varies from 0 to 1, allow a smooth loiter to manual transition
+static int16_t loiter_man_timer;		// ST: mixer timer
 static int8_t  update_wind_offset_timer;	// update wind_offset decimator (10Hz)
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1847,7 +1851,14 @@ void update_roll_pitch_mode(void)
                 timeout_pitch_updated = true;
 			}
 		}
-	
+		// loiter to manual mix
+		if ((hybrid_mode_pitch==1)||(hybrid_mode_roll==1)) {
+			if (!ap.land_complete && loiter_man_timer!=0){
+				loiter_man_mix = constrain_float((float)(loiter_man_timer)/(float)LOITER_MAN_MIX_TIMER, 0, 1.0);//constrain_float((float)(LOITER_MAN_MIX_TIMER-loiter_man_timer)/(float)LOITER_MAN_MIX_TIMER, 0, 1.0);
+				loiter_man_timer--;
+			}
+		}
+		
 		if ((hybrid_mode_pitch==3)&&(hybrid_mode_roll==3)){
             // while loitering, updates average lat/lon wind offset angles from I terms
 			if (nav_mode==NAV_HYBRID){
@@ -1866,7 +1877,13 @@ void update_roll_pitch_mode(void)
                 brake_pitch = 1;            // required for next mode_1 smooth stick release and to avoid twitch
 			}
         }else{
-            set_nav_mode(NAV_NONE);
+			if (nav_mode!=NAV_NONE) {	// ST: transition from Loiter to Manual
+				set_nav_mode(NAV_NONE);
+				loiter_man_timer=LOITER_MAN_MIX_TIMER;
+				// ST: save pitch/roll at loiter exit (for loiter to manual mix)
+				loiter_roll=wp_nav.get_desired_roll();
+				loiter_pitch=wp_nav.get_desired_pitch();
+			}
             if (update_wind_offset_timer==0){	// reduce update frequency of wind_offset to 10Hz
 					// compute wind_offset_roll/pitch frame referred lon/lat_i_term and yaw rotated
 					// acceleration to angle
@@ -1878,7 +1895,10 @@ void update_roll_pitch_mode(void)
    
 		// output to stabilize controllers
 		switch (hybrid_mode_roll){
-			case 1: // same action for cases 1&2
+			case 1: { 
+						//Loiter-Manual mix at loiter exit
+						control_roll = loiter_man_mix*(float)loiter_roll+(1.0f-loiter_man_mix)*(float)(brake_roll+wind_offset_roll); break;
+					}
 			case 2: { control_roll = brake_roll+wind_offset_roll; break;}
 			case 3: { 
 						if(nav_mode == NAV_HYBRID) { // if nav_hybrid enabled...
@@ -1891,7 +1911,10 @@ void update_roll_pitch_mode(void)
 					}
 		}
 		switch (hybrid_mode_pitch){
-			case 1: // same action for cases 1&2
+			case 1: { 
+						//Loiter-Manual mix at loiter exit
+						control_pitch = loiter_man_mix*(float)loiter_pitch+(1.0f-loiter_man_mix)*(float)(brake_pitch+wind_offset_pitch); break;
+					}
 			case 2: { control_pitch = brake_pitch+wind_offset_pitch; break;}
 			case 3: { 
 						if(nav_mode == NAV_HYBRID) { // if nav_hybrid enabled...
