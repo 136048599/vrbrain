@@ -257,7 +257,7 @@ bool VRBRAINRCInput::_sbus_dct(){
 
     //set pin7 as output and pin 3 as input
     hal.gpio->pinMode(pin7, OUTPUT);
-    hal.gpio->pinMode(pin8, INPUT);
+    hal.gpio->pinMode(pin8, INPUT_PULLUP);
 
     //default pin8 to 0
     hal.gpio->write(pin8, 0);
@@ -352,7 +352,7 @@ bool VRBRAINRCInput::_ppmsum_dct(){
 
         //set pin2 as output and pin 3 as input
         hal.gpio->pinMode(pin2, OUTPUT);
-        hal.gpio->pinMode(pin3, INPUT);
+        hal.gpio->pinMode(pin3, INPUT_PULLUP);
 
         //default pin3 to 0
         hal.gpio->write(pin3, 0);

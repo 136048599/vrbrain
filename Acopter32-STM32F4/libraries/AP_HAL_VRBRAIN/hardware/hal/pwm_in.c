@@ -234,27 +234,16 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 	    TIM_ClearITPendingBit(channel.tim, channel.tim_cc);
 	    val = TIM_GetCapture1(channel.tim);
 
-	    uint32 sr = tim->SR;
-	    uint32 overcapture_mask = (1 << (TIMER_SR_CC1OF_BIT + channel.tim_channel - 1));
-
-	    if (sr & overcapture_mask)
-	       {
-	   	// Hmmm, lost an interrupt somewhere? Ignore this sample
-	   	tim->SR &= ~overcapture_mask; // Clear overcapture flag
-	   	return;
-	       }
-
 	    input->last_pulse = systick_uptime();
 	    input->rise = val;
 
-	    if (input->rise < last_val)
+	    if (input->rise > last_val)
 		{
-
-		time_off = input->rise + 0xFFFF - last_val;
+		time_off = input->rise - last_val;
 		}
 	    else
 		{
-		time_off = input->rise - last_val;
+		time_off = ((0xFFFF - last_val) + input->rise);
 		}
 
 	    last_val = val;
@@ -307,10 +296,10 @@ static inline void pwmIRQHandler(TIM_TypeDef *tim)
 		else
 		    {
 		    input->fall = val;
-		    if (input->fall < input->rise)
-			time_on = input->fall + 0xFFFF - input->rise ;
-		    else
+		    if (input->fall > input->rise)
 			time_on = (input->fall - input->rise);
+		    else
+			time_on = ((0xFFFF - input->rise) + input->fall);
 
 		    if ((time_on >= MINONWIDTH) && (time_on <= MAXONWIDTH))
 			{
@@ -367,7 +356,7 @@ static void pwmInitializeInput()
 		    channel.gpio_af_tim);
 	    // enable the TIM global interrupt
 	    NVIC_InitStructure.NVIC_IRQChannel = channel.tim_irq;
-	    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
 	    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	    NVIC_Init(&NVIC_InitStructure);
@@ -414,7 +403,7 @@ static void pwmInitializeInput()
 		channel.gpio_af_tim);
 	// enable the TIM global interrupt
 	NVIC_InitStructure.NVIC_IRQChannel = channel.tim_irq;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
@@ -430,7 +419,7 @@ static void pwmInitializeInput()
 
 	// PWM input capture ************************************************************/
 	TIM_ICInitStructure.TIM_Channel = channel.tim_channel;
-	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Falling;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
 	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
 	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
 	TIM_ICInitStructure.TIM_ICFilter = 0x0;

@@ -53,7 +53,7 @@ HAL_VRBRAIN::HAL_VRBRAIN() :
       &spiDeviceManager,
       &analogIn,
       &storageDriver,
-      &uartADriver,
+      &uartCDriver,
       &gpioDriver,
       &rcinDriver,
       &rcoutDriver,
@@ -92,7 +92,7 @@ void HAL_VRBRAIN::init(int argc,char* const argv[]) const
   scheduler->init(NULL);
 
   uartA->begin(57600);
-  //uartC->begin(57600);
+  uartC->begin(57600);
 
   //uartC->set_blocking_writes(true);
 
