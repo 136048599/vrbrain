@@ -396,7 +396,7 @@ static void pwmInitializeInput()
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
 	GPIO_Init(channel.gpio_port, &GPIO_InitStructure);
 	// gpio_set_af_mode *************************************************************/
 	GPIO_PinAFConfig(channel.gpio_port, channel.gpio_af,
@@ -419,10 +419,10 @@ static void pwmInitializeInput()
 
 	// PWM input capture ************************************************************/
 	TIM_ICInitStructure.TIM_Channel = channel.tim_channel;
-	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Falling;
 	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
 	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
-	TIM_ICInitStructure.TIM_ICFilter = 0x0;
+	TIM_ICInitStructure.TIM_ICFilter = 0x03;
 	TIM_ICInit(channel.tim, &TIM_ICInitStructure);
 	// timer_enable *****************************************************************/
 	TIM_Cmd(channel.tim, ENABLE);
