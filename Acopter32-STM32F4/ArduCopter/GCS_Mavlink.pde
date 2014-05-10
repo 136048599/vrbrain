@@ -1734,11 +1734,11 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             if(tell_command.id == MAV_CMD_DO_SET_ROI){
         	//set the ROI for the guided mode
         	do_roi(&tell_command);
-        	Log_Write_Roi(&tell_command, 1);
+        	Log_Write_Roi(&tell_command);
             } else if(tell_command.id == MAV_CMD_NAV_WAYPOINT){
 		// initiate guided mode
 		do_guided(&tell_command);
-        	Log_Write_Roi(&tell_command, 2);
+        	Log_Write_FollowMe(&tell_command);
             }
 
             // verify we recevied the command

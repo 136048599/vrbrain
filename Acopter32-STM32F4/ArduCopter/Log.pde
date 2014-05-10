@@ -49,6 +49,7 @@ print_log_menu(void)
         if (g.log_bitmask & MASK_LOG_COMPASS) cliSerial->printf_P(PSTR(" COMPASS"));
         if (g.log_bitmask & MASK_LOG_CAMERA) cliSerial->printf_P(PSTR(" CAMERA"));
         if (g.log_bitmask & MASK_LOG_ROI) cliSerial->printf_P(PSTR(" ROI"));
+        if (g.log_bitmask & MASK_LOG_FOLLOWME) cliSerial->printf_P(PSTR(" FOLLOWME"));
     }
 
     cliSerial->println();
@@ -140,6 +141,7 @@ select_logs(uint8_t argc, const Menu::arg *argv)
         TARG(COMPASS);
         TARG(CAMERA);
         TARG(ROI);
+        TARG(FOLLOWME);
  #undef TARG
     }
 
@@ -663,11 +665,10 @@ struct PACKED log_Roi {
     int32_t  longitude;
     int32_t  altitude;
     uint8_t  enabled;
-    uint8_t  roi_type;
 };
 
 // Write a Roi packet
-static void Log_Write_Roi(struct Location *roi_loc, uint8_t type)
+static void Log_Write_Roi(struct Location *roi_loc)
 {
     struct log_Roi pkt = {
         LOG_PACKET_HEADER_INIT(LOG_ROI_MSG),
@@ -677,10 +678,35 @@ static void Log_Write_Roi(struct Location *roi_loc, uint8_t type)
         longitude   : roi_loc->lng,
         altitude    : roi_loc->alt,
         enabled     : roi_loc->p1,
-        roi_type    : type
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
+
+struct PACKED log_FollowMe {
+    LOG_PACKET_HEADER;
+    uint32_t gps_time;
+    uint16_t gps_week;
+    int32_t  latitude;
+    int32_t  longitude;
+    int32_t  altitude;
+    uint8_t  enabled;
+};
+
+// Write a Follow packet
+static void Log_Write_FollowMe(struct Location *followme_loc)
+{
+    struct log_FollowMe pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_FOLLOWME_MSG),
+        gps_time    : g_gps->time_week_ms,
+        gps_week    : g_gps->time_week,
+        latitude    : followme_loc->lat,
+        longitude   : followme_loc->lng,
+        altitude    : followme_loc->alt,
+        enabled     : followme_loc->p1,
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 
 struct PACKED log_Error {
     LOG_PACKET_HEADER;
@@ -744,7 +770,9 @@ static const struct LogStructure log_structure[] PROGMEM = {
     { LOG_CAMERA_MSG, sizeof(log_Camera),                 
       "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
     { LOG_ROI_MSG, sizeof(log_Roi),
-      "ROI",   "IHLLeBB",   "GPSTime,GPSWeek,Lat,Lng,Alt,Enable,Type" },
+      "ROI",   "IHLLeB",   "GPSTim,GPSWk,Lat,Lng,Alt,En" },
+    { LOG_FOLLOWME_MSG, sizeof(log_FollowMe),
+      "FLWME",   "IHLLeB",   "GPSTim,GPSWk,Lat,Lng,Alt,En" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
 };

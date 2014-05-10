@@ -251,6 +251,7 @@
 #define LOG_AUTOTUNEDETAILS_MSG         0x1A
 #define LOG_COMPASS2_MSG                0x1B
 #define LOG_ROI_MSG                     0x1C
+#define LOG_FOLLOWME_MSG                     0x1D
 #define LOG_INDEX_MSG                   0xF0
 #define MAX_NUM_LOGS                    50
 
@@ -266,7 +267,7 @@
 #define MASK_LOG_CURRENT                (1<<9)
 #define MASK_LOG_RCOUT                  (1<<10)
 #define MASK_LOG_OPTFLOW                (1<<11)
-#define MASK_LOG_PID                    (1<<12) // deprecated
+#define MASK_LOG_FOLLOWME               (1<<12)
 #define MASK_LOG_COMPASS                (1<<13)
 #define MASK_LOG_ROI                    (1<<14)
 #define MASK_LOG_CAMERA                 (1<<15)
