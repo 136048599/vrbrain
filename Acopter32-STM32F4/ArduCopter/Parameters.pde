@@ -260,6 +260,16 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(pilot_velocity_z_max,     "PILOT_VELZ_MAX",   PILOT_VELZ_MAX),
 
+    // @Param: FOLLOWME_FAST
+    // @DisplayName: Enable fast waypoints in followme
+    // @Description: Enable fast waypoints in followme
+    // @Units: true/false
+    // @Range: 0 1
+    // @Increment: 1
+    // @User: Standard
+    GSCALAR(followme_fast,     "FOLLOWME_FAST",   FOLLOWME_FAST),
+
+
     // @Param: THR_MIN
     // @DisplayName: Throttle Minimum
     // @Description: The minimum throttle that will be sent to the motors to keep them spinning

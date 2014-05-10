@@ -82,7 +82,7 @@ public:
         k_param_toy_yaw_rate,                   // deprecated - remove
         k_param_crosstrack_min_distance,	// deprecated - remove with next eeprom number change
         k_param_rssi_pin,
-        k_param_throttle_accel_enabled,     // deprecated - remove
+        k_param_followme_fast,     		// sets the follow me to fast waypoint
         k_param_wp_yaw_behavior,
         k_param_acro_trainer,
         k_param_pilot_velocity_z_max,
@@ -333,6 +333,7 @@ public:
     AP_Int32        rtl_loiter_time;
     AP_Int16        land_speed;
     AP_Int16        pilot_velocity_z_max;        // maximum vertical velocity the pilot may request
+    AP_Int8	    followme_fast;
 
 
     // Throttle
@@ -343,6 +344,7 @@ public:
     AP_Int16        failsafe_throttle_value;
     AP_Int16        throttle_cruise;
     AP_Int16        throttle_mid;
+
 
     // Flight modes
     //
