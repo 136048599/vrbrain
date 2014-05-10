@@ -346,8 +346,10 @@ void AC_WPNav::calculate_loiter_leash_length()
 void AC_WPNav::set_destination(const Vector3f& destination)
 {
     // if waypoint controlls is active and copter has reached the previous waypoint use it for the origin
-    if( _flags.reached_destination && ((hal.scheduler->millis() - _wpnav_last_update) < 1000) ) {
-        _origin = _destination;
+    //if( _flags.reached_destination && ((hal.scheduler->millis() - _wpnav_last_update) < 1000) ) {
+    //    _origin = _destination;
+    if( (hal.scheduler->millis() - _wpnav_last_update) < 1000 ) {
+       _origin = _target;
     }else{
         // otherwise calculate origin from the current position and velocity
         get_stopping_point(_inav->get_position(), _inav->get_velocity(), _origin);
