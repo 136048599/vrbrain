@@ -770,9 +770,9 @@ static const struct LogStructure log_structure[] PROGMEM = {
     { LOG_CAMERA_MSG, sizeof(log_Camera),                 
       "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
     { LOG_ROI_MSG, sizeof(log_Roi),
-      "ROI",   "IHLLeB",   "GPSTim,GPSWk,Lat,Lng,Alt,En" },
+      "ROI",   "IHLLeB",   "GPSTim,GPSWk,RoiLat,RoiLng,RoiAlt,En" },
     { LOG_FOLLOWME_MSG, sizeof(log_FollowMe),
-      "FLWME",   "IHLLeB",   "GPSTim,GPSWk,Lat,Lng,Alt,En" },
+      "FLWME",   "IHLLeB",   "GPSTim,GPSWk,FWLat,FWLng,FWAlt,En" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
 };
