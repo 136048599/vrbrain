@@ -98,17 +98,19 @@ void VRBRAINRCInput::init(void* machtnichts)
 
 uint8_t VRBRAINRCInput::valid_channels()
     {
-    if(g_is_ppmsum != 1 )
-	return 4;
-    else
 	return _valid_channels;
-
     }
 /* constrain captured pulse to be between min and max pulsewidth. */
 static inline uint16_t constrain_pulse(uint16_t p) {
     if (p > RC_INPUT_MAX_PULSEWIDTH) return RC_INPUT_MAX_PULSEWIDTH;
     if (p < RC_INPUT_MIN_PULSEWIDTH) return RC_INPUT_MIN_PULSEWIDTH;
     return p;
+}
+/* constrain captured pulse to be between min and max pulsewidth. */
+static inline bool check_pulse(uint16_t p) {
+    if (p > RC_INPUT_MAX_PULSEWIDTH) return false;
+    if (p < RC_INPUT_MIN_PULSEWIDTH) return false;
+    return true;
 }
 
 uint16_t VRBRAINRCInput::read(uint8_t ch)
@@ -119,25 +121,15 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
     noInterrupts();
     if (g_is_ppmsum == 3) {
 	data = _sbus->getChannel(ch);
+	_valid_channels = 14;
 
-    }else if (g_is_ppmsum == 0)
-	{
-	//data = rcPinValue[ch];
-	data = pwmRead(ch);
-	}
-    else
-	{
+    } else {
 	data = _channel[ch];
-	pulse = _last_pulse[ch];
-
     }
     interrupts();
 
     /* Check for override */
     uint16_t over = _override[ch];
-
-    if((g_is_ppmsum == 1) && (ch == 2) && (systick_uptime() - pulse > 100))
-	data = 900;
 
     return (over == 0) ? data : over;
     }
@@ -145,34 +137,21 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
 uint8_t VRBRAINRCInput::read(uint16_t* periods, uint8_t len)
     {
     noInterrupts();
-    for (uint8_t i = 0; i < len; i++)
-	{
+    for (uint8_t i = 0; i < len; i++) {
 	if (g_is_ppmsum == 3) { //SBUS
-	    periods[i] = constrain_pulse(_sbus->getChannel(i));
-
-	} else if (g_is_ppmsum == 0) { //PWM
-	    if(i < 5 && (hal.scheduler->millis() - _last_pulse[i] > 500)) {
-		periods[2] = 900;
-		_valid_channels = 0;
-	    } else {
-		periods[i] = constrain_pulse(pwmRead(i));
-		_valid_channels = 1;
-	    }
-
-	} else { //PPMSUM
-	    if ( i == 2 && (hal.scheduler->millis() - _last_pulse[i] > 500) ) {
-		periods[i] = 900;
-		_valid_channels = 0;
-	    } else {
-		periods[i] = constrain_pulse(_channel[i]);
-		_valid_channels = 1;
-	    }
+	    periods[i] = _sbus->getChannel(i);
+	    _valid_channels = 14;
+	} else {
+	    periods[i] = _channel[i];
 	}
+    }
+    interrupts();
 
-	if (_override[i] != 0)
+    for (uint8_t i = 0; i < len; i++) {
+	if (_override[i] != 0) {
 	    periods[i] = _override[i];
 	}
-    interrupts();
+    }
 
     return len;
     }
@@ -234,7 +213,7 @@ void VRBRAINRCInput::rxIntPWM(uint8_t channel, uint16_t value)
     {
     _channel[channel] = value;
     _last_pulse[channel] = hal.scheduler->millis();
-    _valid_channels = 8;
+    _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
     }
 
 void VRBRAINRCInput::_detect_rc(){
@@ -275,7 +254,7 @@ bool VRBRAINRCInput::_sbus_dct(){
 
     //set pin7 as output and pin 3 as input
     hal.gpio->pinMode(pin7, OUTPUT);
-    hal.gpio->pinMode(pin8, INPUT);
+    hal.gpio->pinMode(pin8, INPUT_PULLUP);
 
     //default pin8 to 0
     hal.gpio->write(pin8, 0);
@@ -370,7 +349,7 @@ bool VRBRAINRCInput::_ppmsum_dct(){
 
         //set pin2 as output and pin 3 as input
         hal.gpio->pinMode(pin2, OUTPUT);
-        hal.gpio->pinMode(pin3, INPUT);
+        hal.gpio->pinMode(pin3, INPUT_PULLUP);
 
         //default pin3 to 0
         hal.gpio->write(pin3, 0);

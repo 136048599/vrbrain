@@ -120,7 +120,7 @@ uint16_t SBUSClass::getChannel(int channel) {
 		return 0;
 	} else {
 	    if(hal.scheduler->millis() - _last_update > 500) {
-		_failsafe = 1;
+		_failsafe = SBUS_FAILSAFE_ACTIVE;
 	    }
 	    if (channel == 2 && _failsafe) { //hardcoded failsafe action if RX is in failsafe, put throttle to 900
 		return 900;
