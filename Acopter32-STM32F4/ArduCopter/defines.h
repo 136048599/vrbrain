@@ -128,7 +128,7 @@
 #define OF_LOITER 10                    // Hold a single location using optical flow sensor
 #define DRIFT 11                        // DRIFT mode (Note: 12 is no longer used)
 #define SPORT 13                        // earth frame rate control
-#define HYBRID 14                       // ST-JD Hybrid mode = Loiter with direct stick commands
+#define HYBRID 16                       // ST-JD Hybrid mode = Loiter with direct stick commands
 #define NUM_MODES 15
 
 

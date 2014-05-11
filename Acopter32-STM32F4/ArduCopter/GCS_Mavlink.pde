@@ -1896,7 +1896,7 @@ mission_failed:
         v[7] = packet.chan8_raw;
 
         if(g.failsafe_gcs == FS_GCS_DISABLED) {
-            send_text_P(SEVERITY_HIGH,PSTR("RC Override Rejected - NO Failsafe active"));
+            send_text_P(SEVERITY_HIGH,PSTR("RC Override Rejected - No GCS Failsafe!"));
         } else {
 	    hal.rcin->set_overrides(v, 8);
 
