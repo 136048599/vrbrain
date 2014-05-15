@@ -445,8 +445,6 @@ void AC_WPNav::set_origin_and_destination(const Vector3f& origin, const Vector3f
     _track_desired = 0;
     _target = origin;
     _flags.reached_destination = false;
-    // default waypoint back to slow
-    _flags.fast_waypoint = false;
     _wpnav_reset = 1; //reset wpnav update
 
     // initialise the limited speed to current speed along the track
@@ -455,11 +453,12 @@ void AC_WPNav::set_origin_and_destination(const Vector3f& origin, const Vector3f
     float speed_along_track = curr_vel.x * _pos_delta_unit.x + curr_vel.y * _pos_delta_unit.y + curr_vel.z * _pos_delta_unit.z;
     _limited_speed_xy_cms = constrain_float(speed_along_track,0,_wp_speed_cms);
 
-
+    // default waypoint back to slow
+    _flags.fast_waypoint = false;
 
     // initialise desired roll and pitch to current roll and pitch.  This avoids a random twitch between now and when the wpnav controller is first run
-    //_desired_roll = constrain_int32(_ahrs->roll_sensor,-_lean_angle_max_cd,_lean_angle_max_cd);
-    //_desired_pitch = constrain_int32(_ahrs->pitch_sensor,-_lean_angle_max_cd,_lean_angle_max_cd);
+    _desired_roll = constrain_int32(_ahrs->roll_sensor,-_lean_angle_max_cd,_lean_angle_max_cd);
+    _desired_pitch = constrain_int32(_ahrs->pitch_sensor,-_lean_angle_max_cd,_lean_angle_max_cd);
 
     // reset target velocity - only used by loiter controller's interpretation of pilot input
     _target_vel.x = 0;
@@ -640,6 +639,9 @@ void AC_WPNav::get_loiter_position_to_velocity(float dt, float max_speed_cms)
     Vector3f curr = _inav->get_position();
     float dist_error_total;
 
+    float vel_sqrt;
+    float vel_total;
+
     float linear_distance;      // the distace we swap between linear and sqrt.
     float kP = _pid_pos_lat->kP();
 
@@ -654,21 +656,20 @@ void AC_WPNav::get_loiter_position_to_velocity(float dt, float max_speed_cms)
 
         linear_distance = _wp_accel_cms/(2.0f*kP*kP);
 
-        _distance_to_target = pythagorous2(dist_error.x,dist_error.y);
+        dist_error_total = safe_sqrt(dist_error.x*dist_error.x + dist_error.y*dist_error.y);
+        _distance_to_target = dist_error_total;      // for reporting purposes
 
-        //if( _distance_to_target > 2.0f*linear_distance ) {
-        if(0) {
-            // velocity response grows with the square root of the distance
-            float vel_sqrt = safe_sqrt(2.0f*_wp_accel_cms*(_distance_to_target-linear_distance));
-            desired_vel.x = vel_sqrt * dist_error.x/_distance_to_target;
-            desired_vel.y = vel_sqrt * dist_error.y/_distance_to_target;
+        if( dist_error_total > 2.0f*linear_distance ) {
+            vel_sqrt = safe_sqrt(2.0f*_wp_accel_cms*(dist_error_total-linear_distance));
+            desired_vel.x = vel_sqrt * dist_error.x/dist_error_total;
+            desired_vel.y = vel_sqrt * dist_error.y/dist_error_total;
         }else{
             desired_vel.x = _pid_pos_lat->kP() * dist_error.x;
             desired_vel.y = _pid_pos_lon->kP() * dist_error.y;
         }
 
         // ensure velocity stays within limits
-        float vel_total = pythagorous2(desired_vel.x, desired_vel.y);
+        vel_total = safe_sqrt(desired_vel.x*desired_vel.x + desired_vel.y*desired_vel.y);
         if( vel_total > max_speed_cms ) {
             desired_vel.x = max_speed_cms * desired_vel.x/vel_total;
             desired_vel.y = max_speed_cms * desired_vel.y/vel_total;
@@ -694,15 +695,15 @@ void AC_WPNav::get_loiter_velocity_to_acceleration(float vel_lat, float vel_lon,
         desired_accel.y = 0;
 
     } else if(_accel_reset > 0) {
-	//_accel_reset = 0;
+	_accel_reset = 0;
 	//noop keep last desidered accel to overcome glitches;
-	//_vel_last.x = vel_lat;
-	// _vel_last.y = vel_lon;
-	// return;
+	 _vel_last.x = vel_lat;
+	 _vel_last.y = vel_lon;
+	 return;
     } else {
         // feed forward desired acceleration calculation
-        //desired_accel.x = (vel_lat - _vel_last.x)/dt;
-        //desired_accel.y = (vel_lon - _vel_last.y)/dt;
+        desired_accel.x = (vel_lat - _vel_last.x)/dt;
+        desired_accel.y = (vel_lon - _vel_last.y)/dt;
     }
 
     // store this iteration's velocities for the next iteration
@@ -787,8 +788,7 @@ void AC_WPNav::calculate_wp_leash_length(bool climb)
         return;
     }
     // calculate horiztonal leash length
-    //if(_wp_speed_cms <= _wp_accel_cms / kP) {
-    if(1) {
+    if(_wp_speed_cms <= _wp_accel_cms / kP) {
         // linear leash length based on speed close in
         _wp_leash_xy = _wp_speed_cms / kP;
     }else{
@@ -808,9 +808,7 @@ void AC_WPNav::calculate_wp_leash_length(bool climb)
     }else{
         speed_vert = _wp_speed_down_cms;
     }
-
-    //if(speed_vert <= WPNAV_ALT_HOLD_ACCEL_MAX / _althold_kP) {
-    if(1) {
+    if(speed_vert <= WPNAV_ALT_HOLD_ACCEL_MAX / _althold_kP) {
         // linear leash length based on speed close in
         _wp_leash_z = speed_vert / _althold_kP;
     }else{
