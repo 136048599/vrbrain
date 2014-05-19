@@ -34,6 +34,7 @@ extern const AP_HAL::HAL& hal;
 volatile uint16_t VRBRAINRCInput::_channel[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
 volatile uint32_t VRBRAINRCInput::_last_pulse[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
 volatile uint8_t  VRBRAINRCInput::_valid_channels = 0;
+volatile uint32_t VRBRAINRCInput::_last_valid_data = 0;
 
 volatile unsigned char radio_status_rc = 0;
 volatile unsigned char sync = 0;
