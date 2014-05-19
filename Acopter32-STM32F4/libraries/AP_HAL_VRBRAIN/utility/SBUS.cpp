@@ -73,10 +73,29 @@ void SBUSClass::_process() {
 
 		if (buffer_index == 25) {
 			buffer_index = 0;
-			if (buffer[24] != SBUS_ENDBYTE) {
-				//incorrect end byte, out of sync
+			switch (buffer[24]){
+			    case 0x00:
+				/* this is S.BUS 1 */
+				break;
+			    case 0x03:
+				/* S.BUS 2 SLOT0: RX battery and external voltage */
+				break;
+			    case 0x83:
+				/* S.BUS 2 SLOT1 */
+				break;
+			    case 0x43:
+			    case 0xC3:
+			    case 0x23:
+			    case 0xA3:
+			    case 0x63:
+			    case 0xE3:
+				break;
+			    default:
+				/* we expect one of the bits above, but there are some we don't know yet */
 				_decoderErrorFrames++;
 				continue;
+				break;
+				//incorrect end byte, out of sync
 			}
 			_goodFrames++;
 			
