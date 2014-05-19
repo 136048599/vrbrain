@@ -101,7 +101,8 @@ void VRBRAINRCInput::init(void* machtnichts)
 
 uint8_t VRBRAINRCInput::valid_channels()
     {
-    if((hal.scheduler->millis() - _last_valid_data) > 500 ) {
+	
+    if(g_is_ppmsum < 3 && (hal.scheduler->millis() - _last_valid_data) > 500 ) {
 	_valid_channels = 0;
     }
 	return _valid_channels;
