@@ -100,6 +100,9 @@ void VRBRAINRCInput::init(void* machtnichts)
 
 uint8_t VRBRAINRCInput::valid_channels()
     {
+    if((hal.scheduler->millis() - _last_valid_data) > 500 ) {
+	_valid_channels = 0;
+    }
 	return _valid_channels;
     }
 
@@ -119,13 +122,10 @@ static inline bool check_pulse(uint16_t p) {
 uint16_t VRBRAINRCInput::read(uint8_t ch)
     {
     uint16_t data;
-    uint32_t pulse;
 
     noInterrupts();
     if (g_is_ppmsum == 3) {
 	data = _sbus->getChannel(ch);
-	_valid_channels = 14;
-
     } else {
 	data = _channel[ch];
     }
@@ -202,7 +202,8 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
 	{
         if (channel_ctr < VRBRAIN_RC_INPUT_NUM_CHANNELS) {
             _channel[channel_ctr] = value;
-            _last_pulse[channel_ctr] = hal.scheduler->millis();;
+            _last_pulse[channel_ctr] = hal.scheduler->millis();
+            _last_valid_data = hal.scheduler->millis();
             channel_ctr++;
             if (channel_ctr == VRBRAIN_RC_INPUT_NUM_CHANNELS) {
                 _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
@@ -216,6 +217,7 @@ void VRBRAINRCInput::rxIntPWM(uint8_t channel, uint16_t value)
     {
     _channel[channel] = value;
     _last_pulse[channel] = hal.scheduler->millis();
+    _last_valid_data = hal.scheduler->millis();
     _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
     }
 
