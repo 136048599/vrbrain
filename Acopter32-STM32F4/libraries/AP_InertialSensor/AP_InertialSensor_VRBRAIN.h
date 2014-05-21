@@ -3,9 +3,10 @@
 #ifndef __AP_INERTIAL_SENSOR_VRBRAIN_H__
 #define __AP_INERTIAL_SENSOR_VRBRAIN_H__
 
-#include <stdint.h>
 #include <AP_HAL.h>
+#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 #include <AP_Math.h>
+#include <stdint.h>
 #include <AP_Progmem.h>
 #include "AP_InertialSensor.h"
 #include <LowPassFilter2p.h>
@@ -108,5 +109,5 @@ public:
     void						_dump_registers(void);
 #endif
 };
-
+#endif
 #endif // __AP_INERTIAL_SENSOR_MPU6000_H__

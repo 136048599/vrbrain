@@ -1,6 +1,7 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 #include <AP_HAL.h>
+#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 #include "AP_InertialSensor_VRBRAIN.h"
 
 extern const AP_HAL::HAL& hal;
@@ -365,7 +366,7 @@ void AP_InertialSensor_VRBRAIN::_poll_data(void)
             _spi_sem->give();
         } else {
             hal.scheduler->panic(
-                PSTR("PANIC: AP_InertialSensor_MPU6000::_poll_data "
+                PSTR("PANIC: AP_InertialSensor_VRBRAIN::_poll_data "
                      "failed to take SPI semaphore synchronously"));
         }
     }
@@ -641,3 +642,4 @@ float AP_InertialSensor_VRBRAIN::get_delta_time() const
     // the sensor runs at 200Hz
     return _sample_time_usec * 1.0e-6f * _num_samples;
 }
+#endif
