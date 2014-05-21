@@ -3,16 +3,20 @@
 #ifndef __AP_INERTIAL_SENSOR_VRBRAIN_H__
 #define __AP_INERTIAL_SENSOR_VRBRAIN_H__
 
-#include <AP_HAL.h>
-#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
-#include <AP_Math.h>
 #include <stdint.h>
+#include <AP_HAL.h>
+#include <AP_Math.h>
 #include <AP_Progmem.h>
 #include "AP_InertialSensor.h"
 #include <LowPassFilter2p.h>
+#if  CONFIG_HAL_BOARD != HAL_BOARD_VRBRAIN
+ # define MPU6000_CS_PIN       53        // APM pin connected to mpu6000's chip select pin
+#endif
 
 // enable debug to see a register dump on startup
 #define MPU6000_DEBUG 0
+
+#define ENHANCED
 
 class AP_InertialSensor_VRBRAIN : public AP_InertialSensor
 {
@@ -70,10 +74,12 @@ private:
     // support for updating filter at runtime
     uint8_t _last_filter_hz;
 
+#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // support for _sample_rate
     uint8_t _sample_rate;
     //how many seconds between samples
     uint16_t _sample_time_usec;
+#endif
 
     void _set_filter_frequency(uint8_t filter_hz);
 
@@ -88,26 +94,26 @@ private:
 
     uint8_t _default_filter;
 
-    static Vector3f _accel_filtered;
-    static uint32_t _accel_samples;
-    static Vector3f _gyro_filtered;
-    static uint32_t _gyro_samples;
-    static float _temp_filtered;
-    static uint64_t _last_accel_timestamp;
-    static uint64_t _last_gyro_timestamp;
+    Vector3f _accel_filtered;
+    uint32_t _accel_samples;
+    Vector3f _gyro_filtered;
+    uint32_t _gyro_samples;
+    float _temp_filtered;
+    uint64_t _last_accel_timestamp;
+    uint64_t _last_gyro_timestamp;
 
-    static LowPassFilter2p _accel_filter_x;
-    static LowPassFilter2p _accel_filter_y;
-    static LowPassFilter2p _accel_filter_z;
-    static LowPassFilter2p _gyro_filter_x;
-    static LowPassFilter2p _gyro_filter_y;
-    static LowPassFilter2p _gyro_filter_z;
-    static LowPassFilter2p _temp_filter;
+    LowPassFilter2p _accel_filter_x;
+    LowPassFilter2p _accel_filter_y;
+    LowPassFilter2p _accel_filter_z;
+    LowPassFilter2p _gyro_filter_x;
+    LowPassFilter2p _gyro_filter_y;
+    LowPassFilter2p _gyro_filter_z;
+    LowPassFilter2p _temp_filter;
 public:
 
 #if MPU6000_DEBUG
     void						_dump_registers(void);
 #endif
 };
-#endif
-#endif // __AP_INERTIAL_SENSOR_MPU6000_H__
+
+#endif // __AP_INERTIAL_SENSOR_VRBRAIN_H__

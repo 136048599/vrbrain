@@ -1,8 +1,8 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 #include <AP_HAL.h>
-#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 #include "AP_InertialSensor_VRBRAIN.h"
+#include <LowPassFilter2p.h>
 
 extern const AP_HAL::HAL& hal;
 
@@ -155,25 +155,10 @@ extern const AP_HAL::HAL& hal;
 #define MPU6000_REV_D9                          0x59    // 0101			1001
 
 
-Vector3f AP_InertialSensor_VRBRAIN::_accel_filtered;
-uint32_t AP_InertialSensor_VRBRAIN::_accel_samples;
-Vector3f AP_InertialSensor_VRBRAIN::_gyro_filtered;
-uint32_t AP_InertialSensor_VRBRAIN::_gyro_samples;
-uint64_t AP_InertialSensor_VRBRAIN::_last_accel_timestamp;
-uint64_t AP_InertialSensor_VRBRAIN::_last_gyro_timestamp;
-LowPassFilter2p AP_InertialSensor_VRBRAIN::_accel_filter_x(1000, 30);
-LowPassFilter2p AP_InertialSensor_VRBRAIN::_accel_filter_y(1000, 30);
-LowPassFilter2p AP_InertialSensor_VRBRAIN::_accel_filter_z(1000, 30);
-LowPassFilter2p AP_InertialSensor_VRBRAIN::_gyro_filter_x(1000, 30);
-LowPassFilter2p AP_InertialSensor_VRBRAIN::_gyro_filter_y(1000, 30);
-LowPassFilter2p AP_InertialSensor_VRBRAIN::_gyro_filter_z(1000, 30);
-
-
 // This is how often we wish to make raw samples of the sensors in Hz
 const uint32_t  raw_sample_rate_hz = 1000;
 // And the equivalent time between samples in microseconds
 const uint32_t  raw_sample_interval_us = (1000000 / raw_sample_rate_hz);
-
 /*
  *  RM-MPU-6000A-00.pdf, page 33, section 4.25 lists LSB sensitivity of
  *  gyro as 16.4 LSB/DPS at scale factor of +/- 2000dps (FS_SEL==3)
@@ -189,11 +174,18 @@ const float AP_InertialSensor_VRBRAIN::_gyro_scale = (0.0174532f / 32.8f);
  *  variants however
  */
 
-AP_InertialSensor_VRBRAIN::AP_InertialSensor_VRBRAIN() :
+AP_InertialSensor_VRBRAIN::AP_InertialSensor_VRBRAIN() : 
 	AP_InertialSensor(),
     _drdy_pin(NULL),
     _initialised(false),
-    _mpu6000_product_id(AP_PRODUCT_ID_NONE)
+    _mpu6000_product_id(AP_PRODUCT_ID_NONE),
+    _accel_filter_x(1000, 30),
+    _accel_filter_y(1000, 30),
+    _accel_filter_z(1000, 30),
+    _gyro_filter_x(1000, 30),
+    _gyro_filter_y(1000, 30),
+    _gyro_filter_z(1000, 30),
+    _temp_filter(1000,10)
 {
 }
 
@@ -552,7 +544,7 @@ bool AP_InertialSensor_VRBRAIN::_hardware_init(Sample_rate sample_rate)
 
     _register_write(MPUREG_CONFIG, BITS_DLPF_CFG_256HZ_NOLPF2);
 
-    _set_filter_frequency(_mpu6000_filter);
+    _set_filter_frequency(_default_filter);
 
     // set sample rate to 200Hz, and use _sample_divider to give
     // the requested rate to the application
@@ -642,4 +634,4 @@ float AP_InertialSensor_VRBRAIN::get_delta_time() const
     // the sensor runs at 200Hz
     return _sample_time_usec * 1.0e-6f * _num_samples;
 }
-#endif
+
