@@ -156,7 +156,7 @@ void VRBRAINAnalogSource::setup_read() {
 	uint8_t channel = 0;
 	channel = PIN_MAP[_pin].adc_channel;
 	adc_disable(dev);
-	    ADC_RegularChannelConfig(dev->adcx, channel, 1, ADC_SampleTime_84Cycles);
+	    ADC_RegularChannelConfig(dev->adcx, channel, 1, ADC_SampleTime_144Cycles);
 	adc_enable(dev);
     }
 }
