@@ -9,9 +9,7 @@
 #include <AP_Progmem.h>
 #include "AP_InertialSensor.h"
 #include <LowPassFilter2p.h>
-#if  CONFIG_HAL_BOARD != HAL_BOARD_VRBRAIN
- # define MPU6000_CS_PIN       53        // APM pin connected to mpu6000's chip select pin
-#endif
+
 
 // enable debug to see a register dump on startup
 #define MPU6000_DEBUG 0
@@ -99,8 +97,8 @@ private:
     Vector3f _gyro_filtered;
     uint32_t _gyro_samples;
     float _temp_filtered;
-    uint64_t _last_accel_timestamp;
-    uint64_t _last_gyro_timestamp;
+    uint64_t _last_sample_timestamp;
+    bool _have_sample_available;
 
     LowPassFilter2p _accel_filter_x;
     LowPassFilter2p _accel_filter_y;

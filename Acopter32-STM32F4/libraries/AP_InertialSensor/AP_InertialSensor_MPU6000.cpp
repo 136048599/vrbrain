@@ -529,6 +529,7 @@ bool AP_InertialSensor_MPU6000::_hardware_init(Sample_rate sample_rate)
         // show that 10Hz is fine, and makes it very noise resistant
 #if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 #ifdef ENHANCED
+
 	_sample_rate = MPUREG_SMPLRT_200HZ;
 	_sample_time_usec = 50000;
 #endif
