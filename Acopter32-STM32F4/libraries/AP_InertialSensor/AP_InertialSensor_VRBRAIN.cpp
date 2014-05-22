@@ -573,7 +573,7 @@ bool AP_InertialSensor_VRBRAIN::_hardware_init(Sample_rate sample_rate)
 
 float AP_InertialSensor_VRBRAIN::_temp_to_celsius ( int32_t regval )
 {
-    float temp = ((float)regval/340.0) + 36.53f;
+    float temp = ((float)regval/340.0f) + 36.53f;
     return temp;
 }
 
@@ -582,7 +582,7 @@ float AP_InertialSensor_VRBRAIN::_temp_to_celsius ( int32_t regval )
 float AP_InertialSensor_VRBRAIN::get_gyro_drift_rate(void)
 {
     // 0.5 degrees/second/minute
-    return ToRad(0.5/60);
+    return ToRad(0.5f/60.0f);
 }
 
 // return true if a sample is available
