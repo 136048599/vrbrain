@@ -98,7 +98,7 @@ void SBUSClass::_process() {
 
 	uint32_t now = hal.scheduler->micros();
 
-	if((now-_last_update) > 3000 && _serial->available() >= 25) {
+	if((now-_last_update) > 3000 && _serial->available() > 24) {
 
 	    for (uint8_t i = 0; i < SBUS_FRAME_SIZE; i++) {
 		    frame[i] = _serial->read();
@@ -106,6 +106,7 @@ void SBUSClass::_process() {
 	    if (frame[0] != SBUS_STARTBYTE) {
 		//incorrect start byte, out of sync
 		_decoderErrorFrames++;
+		_serial->flush();
 		return;
 	    }
 	    switch (frame[24]){
@@ -172,7 +173,7 @@ void SBUSClass::_process() {
 }
 
 uint16_t SBUSClass::getChannel(uint8_t channel) {
-	if (channel < 0 or channel > 17) {
+	if (channel < 0 || channel > 17) {
 		return 0;
 	} else {
 	    if(hal.scheduler->micros() - _last_update > 500000) {

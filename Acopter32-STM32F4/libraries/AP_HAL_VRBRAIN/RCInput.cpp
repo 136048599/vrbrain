@@ -31,8 +31,7 @@ extern const AP_HAL::HAL& hal;
 //SBUSClass VRBRAINRCInput::_sbus(hal.uartC);
 
 /* private variables to communicate with input capture isr */
-volatile uint16_t VRBRAINRCInput::_channel[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
-volatile uint32_t VRBRAINRCInput::_last_pulse[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {0};
+volatile uint16_t VRBRAINRCInput::_channel[VRBRAIN_RC_INPUT_NUM_CHANNELS] = {1500};
 volatile uint8_t  VRBRAINRCInput::_valid_channels = 0;
 volatile uint32_t VRBRAINRCInput::_last_valid_data = 0;
 
@@ -99,14 +98,13 @@ void VRBRAINRCInput::init(void* machtnichts)
     clear_overrides();
     }
 
-uint8_t VRBRAINRCInput::valid_channels()
-    {
+uint8_t VRBRAINRCInput::valid_channels() {
 	
-    if(g_is_ppmsum < 3 && (hal.scheduler->millis() - _last_valid_data) > 500 ) {
+    if(g_is_ppmsum != 3 && (hal.scheduler->millis() - _last_valid_data) > 500 ) {
 	_valid_channels = 0;
     }
 	return _valid_channels;
-    }
+}
 
 /* constrain captured pulse to be between min and max pulsewidth. */
 static inline uint16_t constrain_pulse(uint16_t p) {
@@ -128,6 +126,7 @@ uint16_t VRBRAINRCInput::read(uint8_t ch)
     noInterrupts();
     if (g_is_ppmsum == 3) {
 	data = _sbus->getChannel(ch);
+	 _valid_channels = 14;
     } else {
 	data = _channel[ch];
     }
@@ -192,6 +191,7 @@ void VRBRAINRCInput::clear_overrides()
 void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
     {
     static uint8_t  channel_ctr;
+    _last_valid_data = hal.scheduler->millis();
 
     if (value > 4000) // Frame synchronization
 	{
@@ -204,8 +204,6 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
 	{
         if (channel_ctr < VRBRAIN_RC_INPUT_NUM_CHANNELS) {
             _channel[channel_ctr] = value;
-            _last_pulse[channel_ctr] = hal.scheduler->millis();
-            _last_valid_data = hal.scheduler->millis();
             channel_ctr++;
             if (channel_ctr == VRBRAIN_RC_INPUT_NUM_CHANNELS) {
                 _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
@@ -218,7 +216,6 @@ void VRBRAINRCInput::rxIntPPMSUM(uint8_t state, uint16_t value)
 void VRBRAINRCInput::rxIntPWM(uint8_t channel, uint16_t value)
     {
     _channel[channel] = value;
-    _last_pulse[channel] = hal.scheduler->millis();
     _last_valid_data = hal.scheduler->millis();
     _valid_channels = VRBRAIN_RC_INPUT_NUM_CHANNELS;
     }
@@ -296,53 +293,6 @@ bool VRBRAINRCInput::_sbus_dct(){
     _detected = false;
     return false;
 
-    //begin serial6 and try to detect SBUS data
-    /*
-     hal.uartD->begin(100000,1);
-
-    uint32_t timer = hal.scheduler->millis();
-
-    while (hal.uartD->available() == 0){
-      if (hal.scheduler->millis() - timer > 1000){
-        return false;
-      }
-    }
-    */
-/*
-    static byte buffer[25];
-    static byte buffer_index = 0;
-    uint8_t decoderErrorFrames = 0;
-
-    while (hal.uartD->available() || decoderErrorFrames < 3) {
-	byte rx = hal.uartD->read();
-	if (buffer_index == 0 && rx != 0x0f) {
-		//incorrect start byte, out of sync
-		decoderErrorFrames++;
-		continue;
-	}
-
-	buffer[buffer_index++] = rx;
-
-	if (buffer_index == 25) {
-		buffer_index = 0;
-		if (buffer[24] != 0x00) {
-			//incorrect end byte, out of sync
-			decoderErrorFrames++;
-			continue;
-		}
-		_rc_type = SBUS;
-		_detected = true;
-		return true;
-	}
-	hal.scheduler->delay(1);
-    }
-    return false;
-    */
-        /*
-	_rc_type = SBUS;
-	_detected = true;
-	return true;
-	*/
 }
 
 bool VRBRAINRCInput::_ppmsum_dct(){
