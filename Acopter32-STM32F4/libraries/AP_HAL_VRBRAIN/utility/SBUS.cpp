@@ -100,6 +100,8 @@ void SBUSClass::_process() {
 
 	if((now-_last_update) > 3000 && _serial->available() > 24) {
 
+	    _last_update = now;
+
 	    for (uint8_t i = 0; i < SBUS_FRAME_SIZE; i++) {
 		    frame[i] = _serial->read();
 	    }
@@ -167,7 +169,7 @@ void SBUSClass::_process() {
 		 _failsafe = SBUS_FAILSAFE_INACTIVE;
 	    }
 
-	    _last_update = hal.scheduler->micros();
+	    _last_update = now;
 	}
 
 }
