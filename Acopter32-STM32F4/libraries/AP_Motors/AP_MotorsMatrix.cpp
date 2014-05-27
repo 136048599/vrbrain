@@ -308,11 +308,13 @@ void AP_MotorsMatrix::output_armed()
         }
 
         //add tbratio
+        /*
         for( i = 4; i<AP_MOTORS_MAX_NUM_MOTORS; i++){
             if (motor_enabled[i]){
         	motor_out[i] *= _tb_ratio;
             }
         }
+        */
 
         // clip motor output if required (shouldn't be)
         for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
