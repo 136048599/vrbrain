@@ -2500,6 +2500,10 @@ static void tuning(){
         // set max loiter speed to 0 ~ 1000 cm/s
         wp_nav.set_loiter_velocity(g.rc_6.control_in);
         break;
+    case CH6_TB_RATIO:
+        // set max loiter speed to 0 ~ 1000 cm/s
+        motors.set_tb_ratio(tuning_value);
+        break;
     }
 }
 

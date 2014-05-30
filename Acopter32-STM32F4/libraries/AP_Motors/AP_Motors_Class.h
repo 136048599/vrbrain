@@ -121,6 +121,8 @@ public:
     //      returns true if curve is created successfully
 	bool                setup_throttle_curve();
 
+    virtual void set_tb_ratio(float tb_ratio) { _tb_ratio = tb_ratio;};
+
     // 1 if motor is enabled, 0 otherwise
     bool                motor_enabled[AP_MOTORS_MAX_NUM_MOTORS];
 
