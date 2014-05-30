@@ -1550,6 +1550,11 @@ void update_yaw_mode(void)
 uint8_t get_wp_yaw_mode(bool rtl)
 {
     switch (g.wp_yaw_behavior) {
+
+	case WP_YAW_BEHAVIOR_NONE:
+	    return YAW_HOLD;
+	    break;
+
         case WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP:
             return YAW_LOOK_AT_NEXT_WP;
             break;
