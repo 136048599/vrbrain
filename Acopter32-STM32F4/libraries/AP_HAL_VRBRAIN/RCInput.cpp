@@ -103,6 +103,9 @@ uint8_t VRBRAINRCInput::valid_channels() {
     if(g_is_ppmsum != 3 && (hal.scheduler->millis() - _last_valid_data) > 500 ) {
 	_valid_channels = 0;
     }
+    if(g_is_ppmsum == 3 && (_sbus->getLastUpdate()/1000) > 1000) {
+	_valid_channels = 0;
+    }
 	return _valid_channels;
 }
 
