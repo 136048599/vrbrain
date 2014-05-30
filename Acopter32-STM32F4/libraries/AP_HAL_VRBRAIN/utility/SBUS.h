@@ -75,7 +75,7 @@ class SBUSClass {
 		void begin();
 		uint16_t getChannel(uint8_t channel);
 		uint16_t getFailsafeStatus();
-		uint16_t getLastUpdate() { return _last_update;} ;
+		uint16_t getLastUpdate() { return _last_frame;} ;
 
 	private:
 		void _process();
