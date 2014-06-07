@@ -90,7 +90,6 @@ void VRBRAINRCOutput::init(void* implspecific)
     /*If external mag is detected then switch off TIMER4 to enable I2C on those channels */
     if (g_ext_mag_detect){
 	timer_disable(TIMER4);
-
 	if(g_is_ppmsum == 1){
 	    //enable timer on the pwm in ch5-8
 	   timerDefaultConfig(TIMER8);
@@ -98,6 +97,7 @@ void VRBRAINRCOutput::init(void* implspecific)
 	    //enable timer on pmn in ch1-4
 	   timerDefaultConfig(TIMER1);
 	}
+	if(g_is_ppmsum > 0) {
 	    /*enable 4 outputs if PPMSUM is detected*/
 	    outPin[MOTORID7] = out_ch9;
 	    outPin[MOTORID8] = out_ch10;
@@ -105,6 +105,7 @@ void VRBRAINRCOutput::init(void* implspecific)
 	    outPin[MOTORID10] = out_ch12;
 
 	    _num_motors = 10;
+	}
 
     } else { //no external mag detected so we use ch7 and ch8 as normal outputs
 
