@@ -115,6 +115,7 @@ static void init_aux_switches()
         case AUX_SWITCH_MISSIONRESET:
         case AUX_SWITCH_ATTCON_FEEDFWD:
         case AUX_SWITCH_ATTCON_ACCEL_LIM:
+        case AUX_SWITCH_SET_CIRCLE_CNTR:
             do_aux_switch_function(g.ch7_option, ap.CH7_flag);
             break;
     }
@@ -135,6 +136,7 @@ static void init_aux_switches()
         case AUX_SWITCH_MISSIONRESET:
         case AUX_SWITCH_ATTCON_FEEDFWD:
         case AUX_SWITCH_ATTCON_ACCEL_LIM:
+        case AUX_SWITCH_SET_CIRCLE_CNTR:
             do_aux_switch_function(g.ch8_option, ap.CH8_flag);
             break;
     }
@@ -423,6 +425,13 @@ static void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
         // enable or disable accel limiting by restoring defaults
         attitude_control.accel_limiting(ch_flag == AUX_SWITCH_HIGH);
         break;
+
+    case AUX_SWITCH_SET_CIRCLE_CNTR:
+    	if(ch_flag == AUX_SWITCH_HIGH) {
+    		circle_nav.set_center(inertial_nav.get_position());
+    		set_circle_center(true);
+    	}
+    	break;
     }
 }
 

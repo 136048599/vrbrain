@@ -7,6 +7,8 @@
 // circle_init - initialise circle controller flight mode
 static bool circle_init(bool ignore_checks)
 {
+	uint32_t dist;
+
     if ((GPS_ok() && inertial_nav.position_ok()) || ignore_checks) {
         circle_pilot_yaw_override = false;
 
@@ -16,13 +18,60 @@ static bool circle_init(bool ignore_checks)
         pos_control.set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
         pos_control.set_accel_z(g.pilot_accel_z);
 
+        if(g.ch7_option == AUX_SWITCH_SET_CIRCLE_CNTR) {
+        	circle_aux_chan = 7;
+        } else if (g.ch8_option == AUX_SWITCH_SET_CIRCLE_CNTR) {
+        	circle_aux_chan = 8;
+        } else {
+        	circle_aux_chan = 0;
+        }
+
+        Vector3f cur_loc = pv_location_to_vector(current_loc);
+
+        //calculate distance from center
+        if(circle_aux_chan != 0) {
+        	dist = pythagorous2(cur_loc.x - circle_nav.get_center().x , cur_loc.y - circle_nav.get_center().y );
+        }
+
+        if (read_circle_chan() == AUX_SWITCH_MIDDLE) {
+        	//if AUX channel pos is in middle then get distance from saved center to calculate circle radius
+            circle_nav.set_radius(dist);
+
+       } else if (read_circle_chan() == AUX_SWITCH_HIGH) {
+    	   // for users with two way switch and to avoid diving in the center
+    	   // of the circle for panorama we check if distance is over 1,5 meter before setting _radius to 0
+    	   // Otherwise we use distance as a radius.
+        	if(dist > 150.0f) {
+        		circle_nav.set_radius(dist);
+        	} else {
+            	// if AUX channel pos is in HIGH the sets the _radius to 0 for panorama shots.
+                circle_nav.set_radius(0.0f);
+        	}
+        }
+
         // initialise circle controller including setting the circle center based on vehicle speed
-        circle_nav.init();
+        if(ap.circle_center_set) {
+            circle_nav.init(circle_nav.get_center());
+        } else {
+            circle_nav.init();
+        }
 
         return true;
     }else{
         return false;
     }
+}
+
+static uint8_t read_circle_chan() {
+
+	if(circle_aux_chan == 7) {
+		return read_3pos_switch(g.rc_7.radio_in);
+	} else if (circle_aux_chan == 8) {
+		return read_3pos_switch(g.rc_8.radio_in);
+	} else {
+		return 0;
+	}
+
 }
 
 // circle_run - runs the circle flight mode
@@ -59,6 +108,25 @@ static void circle_run()
             // clear i term when we're taking off
             set_throttle_takeoff();
         }
+
+
+        //read pitch channel and use it to update circle radius
+        // To-Do: make variable increase based on stick position
+        if(g.rc_2.control_in > 0 && circle_nav.get_radius() < 10000.0f) {
+        	circle_nav.set_radius(circle_nav.get_radius() + 0.5f); // at 100Hz makes it 50 cm every second
+        } else if (g.rc_2.control_in < 0 && circle_nav.get_radius() >= 0.0f) {
+        	circle_nav.set_radius(circle_nav.get_radius() - 0.5f); // at 100Hz makes it 50 cm every second
+        }
+
+        //read roll channel and use it to update circle rate
+        // To-Do: make variable increase based on stick position
+        if(g.rc_1.control_in > 0 && circle_nav.get_rate() < 90.0f) {
+        	circle_nav.set_rate(circle_nav.get_rate() + 0.1f); // at 100Hz makes it 10 rad/s every second
+        } else if (g.rc_1.control_in < 0 && circle_nav.get_rate() > -90.0f) {
+        	circle_nav.set_rate(circle_nav.get_rate() - 0.1f); // at 100Hz makes it 10 rad/s every second
+        }
+
+
     }
 
     // run circle controller

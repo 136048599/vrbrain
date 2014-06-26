@@ -125,3 +125,9 @@ void set_pre_arm_rc_check(bool b)
     }
 }
 
+void set_circle_center(bool b)
+{
+    if(ap.circle_center_set != b) {
+        ap.circle_center_set = b;
+    }
+}

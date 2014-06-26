@@ -14,7 +14,6 @@ static void do_change_alt(const AP_Mission::Mission_Command& cmd);
 static void do_yaw(const AP_Mission::Mission_Command& cmd);
 static void do_change_speed(const AP_Mission::Mission_Command& cmd);
 static void do_set_home(const AP_Mission::Mission_Command& cmd);
-static void do_roi(const AP_Mission::Mission_Command& cmd);
 #if PARACHUTE == ENABLED
 static void do_parachute(const AP_Mission::Mission_Command& cmd);
 #endif
