@@ -84,6 +84,13 @@
 #if HAL_CPU_CLASS < HAL_CPU_CLASS_75
  # define PARACHUTE DISABLED
  # define AC_RALLY DISABLED
+ # define CLI_ENABLED           DISABLED
+ # define FRSKY_TELEM_ENABLED   DISABLED
+#endif
+
+// disable sonar on APM1 and TradHeli/APM2
+#if (CONFIG_HAL_BOARD == HAL_BOARD_APM1 || (CONFIG_HAL_BOARD == HAL_BOARD_APM2 && FRAME_CONFIG == HELI_FRAME))
+ # define CONFIG_SONAR          DISABLED
 #endif
 
 #if HAL_CPU_CLASS < HAL_CPU_CLASS_75 || CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
@@ -334,7 +341,7 @@
 #endif
 
 // expected magnetic field strength.  pre-arm checks will fail if 50% higher or lower than this value
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_APM2 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_APM2
  #ifndef COMPASS_MAGFIELD_EXPECTED
   # define COMPASS_MAGFIELD_EXPECTED     330        // pre arm will fail if mag field > 544 or < 115
  #endif
@@ -615,7 +622,7 @@
  # define RATE_PITCH_D       		0.004f
 #endif
 #ifndef RATE_PITCH_IMAX
- # define RATE_PITCH_IMAX        	500
+ # define RATE_PITCH_IMAX        	1000
 #endif
 
 #ifndef RATE_YAW_P
