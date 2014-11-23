@@ -87,7 +87,7 @@ void VRBRAINAnalogIn::_timer_event(void)
     //adc_reg_map *regs = ADC1->regs;
     const adc_dev *dev = _channels[_active_channel]->_find_device();
 
-    if (_channels[_active_channel]->_pin == ANALOG_INPUT_NONE) {
+    if (_channels[_active_channel]->_pin == ANALOG_INPUT_NONE || PIN_MAP[_channels[_active_channel]->_pin].adc_device == NULL) {
         _channels[_active_channel]->new_sample(0);
         goto next_channel;
     }

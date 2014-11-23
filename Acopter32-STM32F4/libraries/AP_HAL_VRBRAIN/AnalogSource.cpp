@@ -83,6 +83,7 @@ void VRBRAINAnalogSource::set_pin(uint8_t pin) {
     if (pin != _pin) {
 	// ensure the pin is marked as an INPUT pin
 	if (pin != ANALOG_INPUT_NONE && pin != ANALOG_INPUT_BOARD_VCC) {
+	    if(PIN_MAP[pin].adc_channel != ADCx)
 		hal.gpio->pinMode(pin, INPUT_ANALOG);
 	}
 
@@ -149,7 +150,7 @@ void VRBRAINAnalogSource::setup_read() {
 
 	  /* Enable Vrefint on Channel17 */
 	  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 2, ADC_SampleTime_84Cycles);
-    } else if (_pin == ANALOG_INPUT_NONE) {
+    } else if (_pin == ANALOG_INPUT_NONE || PIN_MAP[_pin].adc_channel == ADCx ) {
 
     } else if(dev != NULL) {
 	adc_set_reg_seqlen(dev, 1);
@@ -197,7 +198,7 @@ void VRBRAINAnalogSource::new_sample(uint16_t sample) {
 
 const adc_dev* VRBRAINAnalogSource::_find_device() {
 
-    if(_pin != ANALOG_INPUT_NONE) {
+    if(_pin != ANALOG_INPUT_NONE && PIN_MAP[_pin].adc_device != NULL) {
 	return _ADC1;
     }
     return NULL;
