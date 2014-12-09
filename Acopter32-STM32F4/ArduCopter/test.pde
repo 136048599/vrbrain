@@ -269,19 +269,24 @@ static int8_t
 test_sonar(uint8_t argc, const Menu::arg *argv)
 {
 #if CONFIG_SONAR == ENABLED
-	sonar.init();
+    sonar.init();
 
+    uint32_t now = 0;
     cliSerial->printf_P(PSTR("RangeFinder: %d devices detected\n"), sonar.num_sensors());
-
+    int16_t mv = 0;
     print_hit_enter();
     while(1) {
         delay(100);
         sonar.update();
-
-        cliSerial->printf_P(PSTR("Primary: health %d distance_cm %d \n"), (int)sonar.healthy(), sonar.distance_cm());
-        cliSerial->printf_P(PSTR("All: device_0 type %d health %d distance_cm %d, device_1 type %d health %d distance_cm %d\n"), 
-        (int)sonar._type[0], (int)sonar.healthy(0), sonar.distance_cm(0), (int)sonar._type[1], (int)sonar.healthy(1), sonar.distance_cm(1));
-
+        if(hal.scheduler->millis() - now >= 1000) {
+            now = hal.scheduler->millis();
+            if((int)sonar._type[0] == 1) {
+        	mv = sonar.voltage_mv();
+            }
+	    cliSerial->printf_P(PSTR("Primary: health %d distance_cm %d volatage_mv %d \n"), (int)sonar.healthy(), sonar.distance_cm(), sonar.voltage_mv());
+	    cliSerial->printf_P(PSTR("All: device_0 type %d health %d distance_cm %d, device_1 type %d health %d distance_cm %d\n"),
+	    (int)sonar._type[0], (int)sonar.healthy(0), sonar.distance_cm(0), (int)sonar._type[1], (int)sonar.healthy(1), sonar.distance_cm(1));
+        }
         if(cliSerial->available() > 0) {
             return (0);
         }

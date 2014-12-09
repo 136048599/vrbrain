@@ -147,8 +147,11 @@ static void auto_wp_start(const Vector3f& destination)
 
 // auto_wp_run - runs the auto waypoint controller
 //      called by auto_run at 100hz or more
+
 static void auto_wp_run()
 {
+    int16_t target_climb_rate;
+
     // if not auto armed set throttle to zero and exit immediately
     if(!ap.auto_armed) {
         // To-Do: reset waypoint origin to current location because copter is probably on the ground so we don't want it lurching left or right on take-off
@@ -174,9 +177,6 @@ static void auto_wp_run()
     // run waypoint controller
     wp_nav.update_wpnav();
 
-    // call z-axis position controller (wpnav should have already updated it's alt target)
-    pos_control.update_z_controller();
-
     // call attitude controller
     if (auto_yaw_mode == AUTO_YAW_HOLD) {
         // roll & pitch from waypoint controller, yaw rate from pilot
@@ -185,6 +185,23 @@ static void auto_wp_run()
         // roll, pitch from waypoint controller, yaw heading from auto_heading()
         attitude_control.angle_ef_roll_pitch_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), get_auto_heading(),true);
     }
+
+
+    // call z-axis position controller (wpnav should have already updated it's alt target)
+    //pos_control.update_z_controller();
+
+    // get pilot desired climb rate
+    target_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in);
+
+    // call throttle controller
+    if (sonar_alt_health >= SONAR_ALT_HEALTH_MAX) {
+        // if sonar is ok, use surface tracking
+        target_climb_rate = get_throttle_surface_tracking(target_climb_rate, pos_control.get_alt_target(), G_Dt);
+    }
+
+    // call position controller
+    pos_control.set_alt_target_from_climb_rate(target_climb_rate, G_Dt);
+    pos_control.update_z_controller();
 }
 
 // auto_spline_start - initialises waypoint controller to implement flying to a particular destination using the spline controller

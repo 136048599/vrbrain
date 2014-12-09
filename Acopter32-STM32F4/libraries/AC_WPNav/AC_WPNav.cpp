@@ -459,6 +459,7 @@ void AC_WPNav::advance_wp_target_along_track(float dt)
     // get current location
     Vector3f curr_pos = _inav.get_position();
     Vector3f curr_delta = curr_pos - _origin;
+    Vector3f new_pos;
 
     // calculate how far along the track we are
     track_covered = curr_delta.x * _pos_delta_unit.x + curr_delta.y * _pos_delta_unit.y + curr_delta.z * _pos_delta_unit.z;
@@ -470,15 +471,15 @@ void AC_WPNav::advance_wp_target_along_track(float dt)
     float track_error_xy = pythagorous2(track_error.x, track_error.y);
 
     // calculate the vertical error
-    float track_error_z = fabsf(track_error.z);
+    float track_error_z = 0; //fabsf(track_error.z);
 
     // get position control leash lengths
     float leash_xy = _pos_control.get_leash_xy();
     float leash_z;
     if (track_error.z >= 0) {
-        leash_z = _pos_control.get_leash_up_z();
+        leash_z = 0; //_pos_control.get_leash_up_z();
     }else{
-        leash_z = _pos_control.get_leash_down_z();
+        leash_z = 0; //_pos_control.get_leash_down_z();
     }
 
     // calculate how far along the track we could move the intermediate target before reaching the end of the leash
@@ -556,8 +557,12 @@ void AC_WPNav::advance_wp_target_along_track(float dt)
         _track_desired = constrain_float(_track_desired, 0, _track_length + WPNAV_WP_FAST_OVERSHOOT_MAX);
     }
 
+    new_pos = _origin + _pos_delta_unit * _track_desired;
+
     // recalculate the desired position
-    _pos_control.set_pos_target(_origin + _pos_delta_unit * _track_desired);
+    _pos_control.set_xy_target(new_pos.x,new_pos.y);
+    //_pos_control.set_pos_target(_origin + _pos_delta_unit * _track_desired);
+
 
     // check if we've reached the waypoint
     if( !_flags.reached_destination ) {
@@ -638,7 +643,7 @@ void AC_WPNav::calculate_wp_leash_length()
 {
     // length of the unit direction vector in the horizontal
     float pos_delta_unit_xy = pythagorous2(_pos_delta_unit.x, _pos_delta_unit.y);
-    float pos_delta_unit_z = fabsf(_pos_delta_unit.z);
+    float pos_delta_unit_z = 0; //fabsf(_pos_delta_unit.z);
 
     float speed_z;
     float leash_z;
